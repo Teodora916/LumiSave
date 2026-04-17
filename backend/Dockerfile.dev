@@ -1,0 +1,8 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+WORKDIR /src
+
+# Expose the API port
+EXPOSE 5000
+
+# Default command starts the watcher for hot-reloading
+CMD ["dotnet", "watch", "run", "--project", "LumiSave.API/LumiSave.API.csproj", "--urls", "http://0.0.0.0:5000", "--non-interactive"]
