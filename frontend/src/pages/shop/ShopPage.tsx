@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SlidersHorizontal, Search, X } from 'lucide-react';
-import { ProductCard, Product } from '@/components/shop/ProductCard';
+import { ProductCard } from '@/components/shop/ProductCard';
+import type { Product } from '@/components/shop/ProductCard';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

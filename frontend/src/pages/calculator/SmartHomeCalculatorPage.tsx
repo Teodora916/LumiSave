@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScoreRing } from '@/components/ui/ScoreRing';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
-import { Zap, Plug, Thermostat, Lightbulb, Sun, LineChart } from 'lucide-react';
+import { Zap, Plug, Thermometer, Lightbulb, Sun, LineChart } from 'lucide-react';
 import { CountUpNumber } from '@/components/ui/CountUpNumber';
 import { Button } from '@/components/ui/button';
 import { RangeSlider } from '@/components/ui/RangeSlider';
@@ -56,7 +56,7 @@ export const SmartHomeCalculatorPage: React.FC = () => {
           {[
             { id: 'vampire', label: 'Vampire Power', icon: <Zap className="w-5 h-5"/> },
             { id: 'smartplugs', label: 'Smart Plugs', icon: <Plug className="w-5 h-5"/> },
-            { id: 'thermostat', label: 'Grejanje (Termostat)', icon: <Thermostat className="w-5 h-5"/> },
+            { id: 'thermostat', label: 'Grejanje (Termostat)', icon: <Thermometer className="w-5 h-5"/> },
             { id: 'lighting', label: 'Automatska Rasveta', icon: <Lightbulb className="w-5 h-5"/> },
             { id: 'solar', label: 'Solarni potencijal', icon: <Sun className="w-5 h-5"/> },
             { id: 'results', label: 'Zbirni Rezultati', icon: <LineChart className="w-5 h-5"/> },

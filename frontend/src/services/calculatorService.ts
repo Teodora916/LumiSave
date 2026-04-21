@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import { LightingGroupInput } from '@/stores/calculatorStore';
+import type { LightingGroupInput } from '@/stores/calculatorStore';
 
 export interface LedCalculatorRequest {
   electricityPrice: number;

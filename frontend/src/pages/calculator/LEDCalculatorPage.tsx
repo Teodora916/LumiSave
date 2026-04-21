@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/Select';
 import { RangeSlider } from '@/components/ui/RangeSlider';
 import { CountUpNumber } from '@/components/ui/CountUpNumber';
-import { useCalculatorStore, LightingGroupInput, BulbType } from '@/stores/calculatorStore';
-import { calculateLedSavings, LedCalculationResult } from '@/services/calculatorService';
+import { useCalculatorStore } from '@/stores/calculatorStore';
+import type { LightingGroupInput, BulbType } from '@/stores/calculatorStore';
+import { calculateLedSavings } from '@/services/calculatorService';
+import type { LedCalculationResult } from '@/services/calculatorService';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, LineChart as RCLineChart, Line, ReferenceLine, ReferenceArea } from 'recharts';
 
 export const LEDCalculatorPage: React.FC = () => {
