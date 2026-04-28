@@ -90,7 +90,7 @@ export const SettingsAdminPage: React.FC = () => {
                     <Button
                       onClick={() => handleSave(setting.id)}
                       disabled={savingId === setting.id || editValues[setting.id] === setting.value}
-                      variant={editValues[setting.id] !== setting.value ? 'primary' : 'outline'}
+                      variant={editValues[setting.id] !== setting.value ? 'primary' : 'secondary'}
                     >
                       {savingId === setting.id ? 'Čuvanje...' : 'Sačuvaj'}
                     </Button>

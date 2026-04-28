@@ -110,7 +110,7 @@ export const UsersAdminPage: React.FC = () => {
                       <td className="px-6 py-4">{Number(user.totalSpentRsd).toLocaleString('sr-RS')}</td>
                       <td className="px-6 py-4 text-right">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={() => handleToggleActive(user.id)}
                         >

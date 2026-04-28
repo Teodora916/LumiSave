@@ -118,14 +118,14 @@ export const ProductsAdminPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={() => handleStockUpdate(product.id, product.stockQuantity)}
                         >
                           Zalihe
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="danger"
                           size="sm"
                           onClick={() => handleDelete(product.id)}
                         >
