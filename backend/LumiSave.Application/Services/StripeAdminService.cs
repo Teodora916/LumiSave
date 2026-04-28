@@ -21,6 +21,8 @@ public class StripeAdminService : IStripeAdminService
     private readonly IStripeTransactionRepository _transactionRepo;
     private readonly IOrderRepository _orderRepo;
     private readonly IStripeService _stripeService;
+    private readonly ILedCalculatorSessionRepository _ledRepo;
+    private readonly ISmartHomeCalculatorSessionRepository _smartHomeRepo;
     private readonly IMapper _mapper;
     private readonly ILogger<StripeAdminService> _logger;
 
@@ -28,12 +30,16 @@ public class StripeAdminService : IStripeAdminService
         IStripeTransactionRepository transactionRepo,
         IOrderRepository orderRepo,
         IStripeService stripeService,
+        ILedCalculatorSessionRepository ledRepo,
+        ISmartHomeCalculatorSessionRepository smartHomeRepo,
         IMapper mapper,
         ILogger<StripeAdminService> logger)
     {
         _transactionRepo = transactionRepo;
         _orderRepo = orderRepo;
         _stripeService = stripeService;
+        _ledRepo = ledRepo;
+        _smartHomeRepo = smartHomeRepo;
         _mapper = mapper;
         _logger = logger;
     }
@@ -63,6 +69,11 @@ public class StripeAdminService : IStripeAdminService
         var refundedTotal = allTransactions.Where(t => t.RefundId != null)
             .Sum(t => t.RefundedAmount ?? 0);
 
+        var ledSessions = await _ledRepo.GetAllAsync(ct);
+        var smartHomeSessions = await _smartHomeRepo.GetAllAsync(ct);
+        var totalEnergySaved = ledSessions.Sum(s => s.TotalAnnualSavingsKwh) + 
+                               smartHomeSessions.Sum(s => s.TotalAnnualSavingsKwh);
+
         return new AdminTransactionStatsDto
         {
             TotalRevenue = succeeded.Sum(t => t.Amount),
@@ -70,7 +81,8 @@ public class StripeAdminService : IStripeAdminService
             TodayRevenue = todayTx.Sum(t => t.Amount),
             TodayTransactions = todayTx.Count,
             RefundedTotal = refundedTotal,
-            AverageOrderValue = succeeded.Any() ? succeeded.Average(t => t.Amount) : 0
+            AverageOrderValue = succeeded.Any() ? succeeded.Average(t => t.Amount) : 0,
+            TotalEnergySavedKwh = totalEnergySaved
         };
     }
 

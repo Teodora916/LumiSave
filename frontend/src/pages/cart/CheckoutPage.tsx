@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ShieldCheck, Lock } from 'lucide-react';
+import { ShieldCheck, Lock, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { formatRSD } from '@/lib/utils';
@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ordersApi } from '@/api/orders';
+import { cartApi } from '@/api/cart';
 import { toast } from 'sonner';
 
 const checkoutSchema = z.object({
@@ -26,11 +27,22 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+type Step = 'idle' | 'syncing_cart' | 'creating_session' | 'redirecting';
+
+function stepLabel(step: Step): string {
+  switch (step) {
+    case 'syncing_cart':    return 'Sinhronizacija korpe...';
+    case 'creating_session': return 'Kreiranje narudžbine...';
+    case 'redirecting':     return 'Preusmeravanje na Stripe...';
+    default:                return 'Nastavi na bezbedno plaćanje';
+  }
+}
+
 export const CheckoutPage: React.FC = () => {
-  const { items, getSubtotal } = useCartStore();
+  const { items, getSubtotal, clearCart } = useCartStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [step, setStep] = useState<Step>('idle');
 
   const subtotal = getSubtotal();
   const shipping = subtotal > 5000 ? 0 : 490;
@@ -46,8 +58,22 @@ export const CheckoutPage: React.FC = () => {
   });
 
   const onSubmit = async (data: CheckoutFormValues) => {
-    setIsProcessing(true);
+    setStep('syncing_cart');
     try {
+      // ── Step 1: Sync local Zustand cart → server cart ───────────────────────
+      // Clear the server cart first, then re-add every item from the local store.
+      // This ensures the backend cart exactly mirrors what the user sees.
+      await cartApi.clearCart();
+
+      for (const item of items) {
+        await cartApi.addItem({
+          productId: item.productId,
+          quantity: item.quantity,
+        });
+      }
+
+      // ── Step 2: Create Stripe checkout session ───────────────────────────────
+      setStep('creating_session');
       const result = await ordersApi.createCheckoutSession({
         shippingFirstName: data.firstName,
         shippingLastName: data.lastName,
@@ -56,18 +82,21 @@ export const CheckoutPage: React.FC = () => {
         shippingCity: data.city,
         shippingPostalCode: data.postalCode,
         shippingCountry: data.country,
-        items: items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
       });
 
-      // Redirect to Stripe Checkout page
+      // ── Step 3: Clear local cart and redirect ────────────────────────────────
+      setStep('redirecting');
+      clearCart();
       window.location.href = result.sessionUrl;
+
     } catch (err) {
+      // Toast is shown by api/client.ts interceptor; just reset state here.
       const message = err instanceof Error ? err.message : 'Greška pri kreiranju narudžbine.';
-      toast.error(message);
-      setIsProcessing(false);
+      // Only show toast if client interceptor didn't already (e.g. for network errors)
+      if (message.startsWith('API Error') === false) {
+        toast.error(message);
+      }
+      setStep('idle');
     }
   };
 
@@ -80,6 +109,8 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
+  const isProcessing = step !== 'idle';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
@@ -90,14 +121,29 @@ export const CheckoutPage: React.FC = () => {
           <span className="text-sm font-medium hidden sm:block">Dostava</span>
           <div className="w-12 sm:w-24 border-t-2 border-surface-border mx-2"></div>
 
-          <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-surface-border text-surface-border-strong font-bold text-sm">2</div>
+          <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 font-bold text-sm transition-colors ${
+            isProcessing ? 'border-primary text-primary' : 'border-surface-border text-surface-border'
+          }`}>
+            {step === 'creating_session' || step === 'redirecting'
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : '2'
+            }
+          </div>
           <span className="text-sm font-medium text-text-muted hidden sm:block">Plaćanje (Stripe)</span>
           <div className="w-12 sm:w-24 border-t-2 border-surface-border mx-2 border-dashed"></div>
 
-          <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-surface-border text-surface-border-strong font-bold text-sm">3</div>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-surface-border text-surface-border font-bold text-sm">3</div>
           <span className="text-sm font-medium text-text-muted hidden sm:block">Potvrda</span>
         </div>
       </div>
+
+      {/* Cart sync progress banner */}
+      {step === 'syncing_cart' && (
+        <div className="mb-6 p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-3 text-sm text-primary font-medium">
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          Sinhronizacija vaše korpe sa serverom ({items.length} {items.length === 1 ? 'artikal' : 'artikla'})...
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
@@ -211,7 +257,7 @@ export const CheckoutPage: React.FC = () => {
                 isLoading={isProcessing}
                 leftIcon={!isProcessing ? <ShieldCheck className="w-5 h-5" /> : undefined}
               >
-                {isProcessing ? 'Preusmeravanje na Stripe...' : 'Nastavi na bezbedno plaćanje'}
+                {isProcessing ? stepLabel(step) : 'Nastavi na bezbedno plaćanje'}
               </Button>
 
               <div className="flex items-center justify-center gap-2 mt-4">

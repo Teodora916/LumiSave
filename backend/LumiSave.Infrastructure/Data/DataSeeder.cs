@@ -26,6 +26,9 @@ public static class DataSeeder
 
         // Seed Products
         await SeedProductsAsync(context, categories);
+
+        // Seed System Settings
+        await SeedSystemSettingsAsync(context);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
@@ -411,6 +414,39 @@ public static class DataSeeder
         };
 
         await context.Products.AddRangeAsync(products);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedSystemSettingsAsync(AppDbContext context)
+    {
+        if (await context.SystemSettings.AnyAsync()) return;
+
+        var settings = new List<SystemSetting>
+        {
+            new() { 
+                Id = Guid.NewGuid(), 
+                Key = "Co2FactorKgPerKwh", 
+                Value = "0.417", 
+                Type = "decimal", 
+                Description = "Količina CO2 u kg po ušteđenom kWh (prosek za Srbiju)" 
+            },
+            new() { 
+                Id = Guid.NewGuid(), 
+                Key = "SolarInsolationSerbia", 
+                Value = "1400", 
+                Type = "decimal", 
+                Description = "Prosečna godišnja insolacija u Srbiji (kWh/kWp)" 
+            },
+            new() { 
+                Id = Guid.NewGuid(), 
+                Key = "SolarPanelEfficiency", 
+                Value = "0.20", 
+                Type = "decimal", 
+                Description = "Efikasnost solarnih panela (podrazumevano 20%)" 
+            }
+        };
+
+        await context.SystemSettings.AddRangeAsync(settings);
         await context.SaveChangesAsync();
     }
 }

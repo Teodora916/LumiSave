@@ -98,6 +98,7 @@ try
     builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
     builder.Services.AddScoped<ILedCalculatorSessionRepository, LedCalculatorSessionRepository>();
     builder.Services.AddScoped<ISmartHomeCalculatorSessionRepository, SmartHomeCalculatorSessionRepository>();
+    builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();
 
     // ─── 9. Infrastructure Services ───
     builder.Services.AddScoped<IEmailService, EmailService>();
@@ -117,6 +118,7 @@ try
     builder.Services.AddScoped<IStripeAdminService, StripeAdminService>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IReportService, ReportService>();
+    builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
 
     // ─── 11. CORS ───
     var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()

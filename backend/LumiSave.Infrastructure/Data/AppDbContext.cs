@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
     public DbSet<LedCalculatorSession> LedCalculatorSessions => Set<LedCalculatorSession>();
     public DbSet<SmartHomeCalculatorSession> SmartHomeCalculatorSessions => Set<SmartHomeCalculatorSession>();
     public DbSet<RecommendedProduct> RecommendedProducts => Set<RecommendedProduct>();
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

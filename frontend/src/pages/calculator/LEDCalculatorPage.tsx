@@ -10,27 +10,48 @@ import { RangeSlider } from '@/components/ui/RangeSlider';
 import { CountUpNumber } from '@/components/ui/CountUpNumber';
 import { useCalculatorStore } from '@/stores/calculatorStore';
 import type { BulbType } from '@/stores/calculatorStore';
-import { calculateLedSavings } from '@/services/calculatorService';
-import { XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, LineChart as RCLineChart, Line } from 'recharts';
+import { calculatorApi } from '@/api/calculator';
+import type { LedCalculatorResultDto } from '@/api/calculator';
+import { useCartStore } from '@/stores/cartStore';
+import { toast } from 'sonner';
+import {
+  XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
+  Legend, LineChart as RCLineChart, Line,
+} from 'recharts';
 
 export const LEDCalculatorPage: React.FC = () => {
-  const { 
-    electricityPrice, setElectricityPrice, 
+  const {
+    electricityPrice, setElectricityPrice,
     lightingGroups, addLightingGroup, updateLightingGroup, removeLightingGroup,
-    ledResult, setLedResult
+    ledResult, setLedResult,
   } = useCalculatorStore();
 
+  const { addItem } = useCartStore();
+
   const calculateMutation = useMutation({
-    mutationFn: calculateLedSavings,
-    onSuccess: (data) => {
+    mutationFn: (payload: Parameters<typeof calculatorApi.calculateLed>[0]) =>
+      calculatorApi.calculateLed(payload),
+    onSuccess: (data: LedCalculatorResultDto) => {
       setLedResult(data);
-    }
+    },
+    onError: () => {
+      // Toast is handled by the api/client.ts interceptor
+    },
   });
 
   const handleCalculate = () => {
+    if (lightingGroups.length === 0) return;
+
     calculateMutation.mutate({
-      electricityPrice,
-      rooms: lightingGroups
+      electricityPriceRsd: electricityPrice,
+      lightingGroups: lightingGroups.map((g) => ({
+        roomName: g.roomName || 'Soba',
+        bulbType: g.bulbType,
+        wattageOld: g.wattageOld,
+        bulbCount: g.bulbCount,
+        dailyUsageHours: g.dailyUsageHours,
+        ledPricePerBulb: g.ledPricePerBulb,
+      })),
     });
   };
 
@@ -45,10 +66,24 @@ export const LEDCalculatorPage: React.FC = () => {
     });
   };
 
+  const handleAddProductToCart = (prod: { id: string; name: string; price: number; imageUrl?: string; slug: string }) => {
+    addItem({
+      productId: prod.id,
+      name: prod.name,
+      price: prod.price,
+      quantity: 1,
+      imageUrl: prod.imageUrl,
+    });
+    toast.success(`Dodato u korpu: ${prod.name}`);
+  };
+
   const bulbTypes = [
     { value: 'Incandescent', label: 'Klasična (Volfram)' },
     { value: 'Halogen', label: 'Halogena sijalica' },
     { value: 'CFL', label: 'Štedljiva (CFL)' },
+    { value: 'T8Fluorescent', label: 'Fluorescenta (T8)' },
+    { value: 'MR16', label: 'MR16 Spot' },
+    { value: 'PAR', label: 'PAR Reflektor' },
   ];
 
   const wattageOptions = [
@@ -57,7 +92,15 @@ export const LEDCalculatorPage: React.FC = () => {
     { value: '60', label: '60W' },
     { value: '75', label: '75W' },
     { value: '100', label: '100W' },
+    { value: '150', label: '150W' },
   ];
+
+  // Map backend TenYearProjection to recharts data shape
+  const chartData = ledResult?.tenYearProjection?.map((p) => ({
+    year: p.year,
+    costWithoutLed: Math.round(Number(p.cumulativeCostWithoutLed)),
+    costWithLed: Math.round(Number(p.cumulativeCostWithLed)),
+  })) ?? [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
@@ -67,7 +110,7 @@ export const LEDCalculatorPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-8">
-        
+
         {/* LEFT PANEL - INPUTS */}
         <div className="flex flex-col gap-6">
           <Card>
@@ -77,9 +120,9 @@ export const LEDCalculatorPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">
-                <Input 
-                  type="number" 
-                  value={electricityPrice} 
+                <Input
+                  type="number"
+                  value={electricityPrice}
                   onChange={(e) => setElectricityPrice(Number(e.target.value))}
                   className="w-32"
                 />
@@ -107,7 +150,7 @@ export const LEDCalculatorPage: React.FC = () => {
                 >
                   <Card className="border border-surface-border bg-surface-card">
                     <CardContent className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
-                      <button 
+                      <button
                         onClick={() => removeLightingGroup(group.id)}
                         className="absolute top-4 right-4 text-text-muted hover:text-red-500 transition-colors"
                       >
@@ -116,27 +159,27 @@ export const LEDCalculatorPage: React.FC = () => {
 
                       <div>
                         <label className="text-xs font-semibold text-text-muted mb-1 block">Naziv sobe/grupe</label>
-                        <Input 
-                          placeholder="Npr. Dnevna soba" 
-                          value={group.roomName} 
+                        <Input
+                          placeholder="Npr. Dnevna soba"
+                          value={group.roomName}
                           onChange={(e) => updateLightingGroup(group.id, { roomName: e.target.value })}
                         />
                       </div>
 
                       <div>
                         <label className="text-xs font-semibold text-text-muted mb-1 block">Tip sijalice</label>
-                        <Select 
-                          options={bulbTypes} 
-                          value={group.bulbType} 
+                        <Select
+                          options={bulbTypes}
+                          value={group.bulbType}
                           onChange={(v) => updateLightingGroup(group.id, { bulbType: v as BulbType })}
                         />
                       </div>
 
                       <div>
                         <label className="text-xs font-semibold text-text-muted mb-1 block">Snaga (W)</label>
-                        <Select 
-                          options={wattageOptions} 
-                          value={group.wattageOld.toString()} 
+                        <Select
+                          options={wattageOptions}
+                          value={group.wattageOld.toString()}
                           onChange={(v) => updateLightingGroup(group.id, { wattageOld: Number(v) })}
                         />
                       </div>
@@ -146,10 +189,10 @@ export const LEDCalculatorPage: React.FC = () => {
                         <div className="flex items-center">
                           <Button variant="secondary" size="icon" className="h-10 rounded-r-none border-r-0"
                             onClick={() => updateLightingGroup(group.id, { bulbCount: Math.max(1, group.bulbCount - 1) })}>-</Button>
-                          <Input 
-                            type="number" 
-                            className="h-10 rounded-none text-center border-x-0" 
-                            value={group.bulbCount} 
+                          <Input
+                            type="number"
+                            className="h-10 rounded-none text-center border-x-0"
+                            value={group.bulbCount}
                             readOnly
                           />
                           <Button variant="secondary" size="icon" className="h-10 rounded-l-none border-l-0"
@@ -162,9 +205,9 @@ export const LEDCalculatorPage: React.FC = () => {
                           <span>Dnevno korišćenje</span>
                           <span className="text-primary font-bold">{group.dailyUsageHours} h</span>
                         </label>
-                        <RangeSlider 
-                          min={0.5} max={24} step={0.5} 
-                          value={group.dailyUsageHours} 
+                        <RangeSlider
+                          min={0.5} max={24} step={0.5}
+                          value={group.dailyUsageHours}
                           onChange={(v) => updateLightingGroup(group.id, { dailyUsageHours: v })}
                         />
                       </div>
@@ -182,10 +225,10 @@ export const LEDCalculatorPage: React.FC = () => {
             )}
           </div>
 
-          <Button 
-            variant="primary" 
-            size="xl" 
-            className="w-full mt-4" 
+          <Button
+            variant="primary"
+            size="xl"
+            className="w-full mt-4"
             onClick={handleCalculate}
             disabled={lightingGroups.length === 0}
             isLoading={calculateMutation.isPending}
@@ -217,7 +260,7 @@ export const LEDCalculatorPage: React.FC = () => {
                 <div className="flex-1 bg-surface-border rounded-xl mt-4"></div>
               </div>
             ) : ledResult ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col gap-6"
@@ -226,9 +269,9 @@ export const LEDCalculatorPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <Card variant="stat">
                     <CardContent className="p-5">
-                      <div className="text-sm font-semibold text-text-muted mb-1 flex items-center gap-2"><Zap className="w-4 h-4"/> Ušteda putanja</div>
+                      <div className="text-sm font-semibold text-text-muted mb-1 flex items-center gap-2"><Zap className="w-4 h-4"/> Ušteda godišnje</div>
                       <div className="text-2xl lg:text-3xl font-display font-bold text-primary">
-                        <CountUpNumber value={ledResult.totalAnnualSavingsRsd} format="rsd" />
+                        <CountUpNumber value={Number(ledResult.totalAnnualSavingsRsd)} format="rsd" />
                       </div>
                       <div className="text-xs text-text-secondary mt-1">Godišnje</div>
                     </CardContent>
@@ -237,7 +280,7 @@ export const LEDCalculatorPage: React.FC = () => {
                     <CardContent className="p-5">
                       <div className="text-sm font-semibold text-text-muted mb-1 flex items-center gap-2"><Zap className="w-4 h-4"/> Smanjenje potrošnje</div>
                       <div className="text-2xl lg:text-3xl font-display font-bold text-accent">
-                        <CountUpNumber value={ledResult.totalAnnualSavingsKwh} format="kwh" />
+                        <CountUpNumber value={Number(ledResult.totalAnnualSavingsKwh)} format="kwh" />
                       </div>
                       <div className="text-xs text-text-secondary mt-1">Godišnje</div>
                     </CardContent>
@@ -246,7 +289,7 @@ export const LEDCalculatorPage: React.FC = () => {
                     <CardContent className="p-5">
                       <div className="text-sm font-semibold text-text-muted mb-1 flex items-center gap-2"><Clock className="w-4 h-4"/> Povrat uloženog</div>
                       <div className="text-2xl lg:text-3xl font-display font-bold text-amber-500">
-                        <CountUpNumber value={ledResult.paybackMonths} decimals={1} /> mes
+                        <CountUpNumber value={ledResult.paybackMonths} decimals={0} /> mes
                       </div>
                       <div className="text-xs text-text-secondary mt-1">Break-even tačka</div>
                     </CardContent>
@@ -255,20 +298,20 @@ export const LEDCalculatorPage: React.FC = () => {
                     <CardContent className="p-5">
                       <div className="text-sm font-semibold text-text-muted mb-1 flex items-center gap-2"><Leaf className="w-4 h-4"/> Eko otisak</div>
                       <div className="text-2xl lg:text-3xl font-display font-bold text-emerald-500">
-                        <CountUpNumber value={ledResult.co2ReductionKg} /> kg
+                        <CountUpNumber value={Number(ledResult.co2ReductionKgPerYear)} /> kg
                       </div>
                       <div className="text-xs text-text-secondary mt-1">CO₂ manje godišnje</div>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Consumption Chart */}
+                {/* Consumption Chart — 10-year projection */}
                 <Card>
                   <CardContent className="p-6">
                     <h3 className="font-display font-semibold text-lg mb-6">Poređenje potrošnje (10 godina)</h3>
                     <div className="h-64 w-full text-xs">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RCLineChart data={ledResult.projections}>
+                        <RCLineChart data={chartData}>
                           <XAxis dataKey="year" stroke="#9AC4AD" tick={{fill: '#9AC4AD'}} />
                           <YAxis stroke="#9AC4AD" tick={{fill: '#9AC4AD'}} />
                           <RechartsTooltip formatter={(value) => [`${value} RSD`, '']} />
@@ -281,24 +324,59 @@ export const LEDCalculatorPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Product Recommendations */}
-                <div className="mt-2">
-                  <h3 className="font-display font-semibold mb-4 text-text-primary">Naše preporuke za vas</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {ledResult.recommendedProducts.map((prod: any) => (
-                      <div key={prod.id} className="bg-surface-card border border-surface-border rounded-xl p-4 flex flex-col hover:shadow-md transition-shadow">
-                        <div className="w-full h-24 mb-3 rounded-lg flex items-center justify-center bg-surface-subtle">
-                          <Lightbulb className="w-10 h-10 text-primary opacity-50" />
-                        </div>
-                        <span className="font-medium text-sm text-text-primary line-clamp-2 leading-tight">{prod.name}</span>
-                        <div className="mt-auto pt-3 flex justify-between items-center bg-white">
-                          <span className="font-bold text-primary">{prod.price} RSD</span>
-                          <Button size="icon" variant="secondary" className="h-8 w-8 rounded-lg"><ShoppingCart className="w-4 h-4"/></Button>
-                        </div>
+                {/* Per-Room Breakdown */}
+                {ledResult.groupResults && ledResult.groupResults.length > 0 && (
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="font-display font-semibold text-lg mb-4">Ušteda po sobama</h3>
+                      <div className="flex flex-col divide-y divide-surface-border">
+                        {ledResult.groupResults.map((r, i) => (
+                          <div key={i} className="py-3 flex justify-between items-center text-sm">
+                            <div>
+                              <div className="font-medium text-text-primary">{r.roomName || `Soba ${i + 1}`}</div>
+                              <div className="text-text-muted text-xs">{r.bulbCount} × {r.wattageOld}W → {r.wattageLed}W LED</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-accent">{Math.round(Number(r.annualSavingsRsd)).toLocaleString()} RSD/god</div>
+                              <div className="text-xs text-text-muted">{Math.round(Number(r.wattageSavingPercent))}% manje</div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Product Recommendations */}
+                {ledResult.recommendedProducts && ledResult.recommendedProducts.length > 0 && (
+                  <div className="mt-2">
+                    <h3 className="font-display font-semibold mb-4 text-text-primary">Naše preporuke za vas</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {ledResult.recommendedProducts.map((prod) => (
+                        <div key={prod.id} className="bg-surface-card border border-surface-border rounded-xl p-4 flex flex-col hover:shadow-md transition-shadow">
+                          <div className="w-full h-24 mb-3 rounded-lg flex items-center justify-center bg-surface-subtle overflow-hidden">
+                            {prod.imageUrl
+                              ? <img src={prod.imageUrl} alt={prod.name} className="w-full h-full object-contain p-2" />
+                              : <Lightbulb className="w-10 h-10 text-primary opacity-50" />
+                            }
+                          </div>
+                          <span className="font-medium text-sm text-text-primary line-clamp-2 leading-tight">{prod.name}</span>
+                          <div className="mt-auto pt-3 flex justify-between items-center">
+                            <span className="font-bold text-primary">{Number(prod.price).toLocaleString('sr-RS')} RSD</span>
+                            <Button
+                              size="icon"
+                              variant="secondary"
+                              className="h-8 w-8 rounded-lg"
+                              onClick={() => handleAddProductToCart(prod)}
+                            >
+                              <ShoppingCart className="w-4 h-4"/>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
               </motion.div>
             ) : null}
@@ -310,5 +388,5 @@ export const LEDCalculatorPage: React.FC = () => {
   );
 };
 
-// Fallback icon for card if lucide import issue
+// Fallback icon
 const Lightbulb = ({className}: {className: string}) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>;

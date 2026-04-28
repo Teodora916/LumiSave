@@ -19,6 +19,7 @@ public class LedCalculatorService : ILedCalculatorService
     private readonly ILedCalculatorSessionRepository _sessionRepo;
     private readonly IProductRepository _productRepo;
     private readonly IMapper _mapper;
+    private readonly ISystemSettingService _settingService;
 
     // Lookup table: BulbType → [(old wattage, LED equivalent wattage)]
     private static readonly Dictionary<string, (int OldW, int LedW)[]> LedMappings = new()
@@ -42,16 +43,16 @@ public class LedCalculatorService : ILedCalculatorService
         ["PAR"]          = 890m,
     };
 
-    private const decimal Co2FactorKgPerKwh = 0.417m;
-
     public LedCalculatorService(
         ILedCalculatorSessionRepository sessionRepo,
         IProductRepository productRepo,
-        IMapper mapper)
+        IMapper mapper,
+        ISystemSettingService settingService)
     {
         _sessionRepo = sessionRepo;
         _productRepo = productRepo;
         _mapper = mapper;
+        _settingService = settingService;
     }
 
     public async Task<LedCalculatorResultDto> CalculateAsync(
@@ -109,7 +110,10 @@ public class LedCalculatorService : ILedCalculatorService
         var totalSavingsKwh = totalCurrentKwh - totalLedKwh;
         var totalSavingsRsd = groupResults.Sum(g => g.AnnualSavingsRsd);
         var totalInvestment = groupResults.Sum(g => g.InvestmentRsd);
-        var co2 = totalSavingsKwh * Co2FactorKgPerKwh;
+        
+        var co2Factor = await _settingService.GetDecimalAsync("Co2FactorKgPerKwh", 0.417m, ct);
+        var co2 = totalSavingsKwh * co2Factor;
+        
         var overallPayback = totalSavingsRsd > 0
             ? (int)Math.Ceiling((double)totalInvestment / ((double)totalSavingsRsd / 12))
             : 999;

@@ -38,4 +38,5 @@ public class AdminTransactionStatsDto
     public int TodayTransactions { get; set; }
     public decimal RefundedTotal { get; set; }
     public decimal AverageOrderValue { get; set; }
+    public decimal TotalEnergySavedKwh { get; set; }
 }

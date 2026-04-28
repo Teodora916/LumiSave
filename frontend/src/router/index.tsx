@@ -15,6 +15,11 @@ import { RegisterPage } from '../pages/auth/RegisterPage';
 import { AboutPage } from '../pages/AboutPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
+import { UsersAdminPage } from '../pages/admin/UsersAdminPage';
+import { ProductsAdminPage } from '../pages/admin/ProductsAdminPage';
+import { OrdersAdminPage } from '../pages/admin/OrdersAdminPage';
+import { SettingsAdminPage } from '../pages/admin/SettingsAdminPage';
+
 // Minimal placeholder for remaining admin stubs
 const AdminMockPage = ({ title }: { title: string }) => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -63,9 +68,10 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminDashboardPage /> },
       { path: 'transactions', element: <AdminMockPage title="Transakcije" /> },
-      { path: 'orders', element: <AdminMockPage title="Narudžbine" /> },
-      { path: 'products', element: <AdminMockPage title="Proizvodi" /> },
-      { path: 'users', element: <AdminMockPage title="Korisnici" /> },
+      { path: 'orders', element: <OrdersAdminPage /> },
+      { path: 'products', element: <ProductsAdminPage /> },
+      { path: 'users', element: <UsersAdminPage /> },
+      { path: 'settings', element: <SettingsAdminPage /> },
       { path: 'reports', element: <AdminMockPage title="Izveštaji" /> },
     ],
   },

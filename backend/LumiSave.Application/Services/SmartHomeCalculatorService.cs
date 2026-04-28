@@ -19,6 +19,7 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
     private readonly ISmartHomeCalculatorSessionRepository _sessionRepo;
     private readonly IProductRepository _productRepo;
     private readonly IMapper _mapper;
+    private readonly ISystemSettingService _settingService;
 
     private static readonly Dictionary<string, (decimal Avg, decimal Min, decimal Max)> DeviceStandbyProfiles = new()
     {
@@ -63,18 +64,16 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
         ["Smart-District"]       = 0.03m,
     };
 
-    private const decimal SolarInsolationSerbia = 1400m;
-    private const decimal SolarPanelEfficiency = 0.20m;
-    private const decimal Co2FactorKgPerKwh = 0.417m;
-
     public SmartHomeCalculatorService(
         ISmartHomeCalculatorSessionRepository sessionRepo,
         IProductRepository productRepo,
-        IMapper mapper)
+        IMapper mapper,
+        ISystemSettingService settingService)
     {
         _sessionRepo = sessionRepo;
         _productRepo = productRepo;
         _mapper = mapper;
+        _settingService = settingService;
     }
 
     public async Task<SmartHomeCalculatorResultDto> CalculateAsync(
@@ -168,7 +167,11 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
         // Solar (max 15 pts)
         if (input.Solar != null)
         {
-            var solarResult = CalculateSolar(input.Solar, input.ElectricityPriceRsd);
+            var solarInsolation = await _settingService.GetDecimalAsync("SolarInsolationSerbia", 1400m, ct);
+            var panelEfficiency = await _settingService.GetDecimalAsync("SolarPanelEfficiency", 0.20m, ct);
+            var co2Factor = await _settingService.GetDecimalAsync("Co2FactorKgPerKwh", 0.417m, ct);
+
+            var solarResult = CalculateSolar(input.Solar, input.ElectricityPriceRsd, solarInsolation, panelEfficiency, co2Factor);
             result.SolarResult = solarResult;
             totalSavingsRsd += solarResult.AnnualSavingsRsd;
             totalSavingsKwh += solarResult.AnnualProductionKwh;
@@ -197,7 +200,8 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
             recommendedProducts.AddRange(_mapper.Map<IEnumerable<ProductListDto>>(starterProducts).Take(2));
         }
 
-        var co2 = totalSavingsKwh * Co2FactorKgPerKwh;
+        var co2FactorOverall = await _settingService.GetDecimalAsync("Co2FactorKgPerKwh", 0.417m, ct);
+        var co2 = totalSavingsKwh * co2FactorOverall;
         var averagePayback = totalSavingsRsd > 0
             ? (int)Math.Ceiling((double)totalInvestment / ((double)totalSavingsRsd / 12))
             : 999;
@@ -360,16 +364,16 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
         };
     }
 
-    private static SolarResultDto CalculateSolar(SolarInputDto input, decimal electricityPrice)
+    private static SolarResultDto CalculateSolar(SolarInputDto input, decimal electricityPrice, decimal solarInsolation, decimal panelEfficiency, decimal co2Factor)
     {
-        var capacityKwp = input.AvailableRoofAreaM2 * SolarPanelEfficiency;
-        var annualProductionKwh = capacityKwp * SolarInsolationSerbia;
+        var capacityKwp = input.AvailableRoofAreaM2 * panelEfficiency;
+        var annualProductionKwh = capacityKwp * solarInsolation;
         var annualSavings = annualProductionKwh * electricityPrice;
 
         if (input.HasNetMetering)
             annualSavings += annualProductionKwh * input.NetMeteringRateRsd * 0.2m; // 20% exported
 
-        var co2OffsetKg = annualProductionKwh * Co2FactorKgPerKwh;
+        var co2OffsetKg = annualProductionKwh * co2Factor;
         var coveredConsumptionPct = input.AnnualElectricityCostRsd > 0
             ? (annualSavings / input.AnnualElectricityCostRsd * 100) : 0;
         var payback = annualSavings > 0

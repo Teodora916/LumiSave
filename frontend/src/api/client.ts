@@ -14,10 +14,12 @@ function getToken(): string | null {
 
 type RequestOptions = RequestInit & {
   skipAuth?: boolean;
+  /** Set to true to suppress the automatic error toast (use when errors are shown inline). */
+  silentError?: boolean;
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { skipAuth, ...fetchOptions } = options;
+  const { skipAuth, silentError, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -32,8 +34,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   let finalUrl = `${BASE_URL}${path}`;
-  
-  // Safety: If BASE_URL already has /api and path starts with /api, we remove the double prefix
+
+  // Safety: If BASE_URL already has /api and path starts with /api, remove the duplicate prefix
   if (BASE_URL.endsWith('/api') && path.startsWith('/api/')) {
     finalUrl = `${BASE_URL}${path.substring(4)}`;
   }
@@ -44,7 +46,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   if (response.status === 401) {
-    // Clear auth state and redirect to login
     try {
       localStorage.removeItem('lumisave-auth');
     } catch {
@@ -56,12 +57,36 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (!response.ok) {
     let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+    let validationErrors: string[] = [];
+
     try {
       const errorBody = await response.json();
+      // Parses backend ApiErrorResponse: { statusCode, message, errors[], timestamp }
       errorMessage = errorBody?.message ?? errorBody?.title ?? errorMessage;
+      validationErrors = Array.isArray(errorBody?.errors) ? errorBody.errors : [];
     } catch {
-      // ignore
+      // JSON parse failed — keep default message
     }
+
+    // Auto-display toast for all API errors, matching the old Axios interceptor behaviour.
+    // Individual callers can pass silentError: true to suppress for inline error display.
+    if (!silentError) {
+      try {
+        const { toast } = await import('sonner');
+        if (response.status >= 500) {
+          toast.error('Server greška, pokušajte ponovo kasnije.');
+        } else if (validationErrors.length > 0) {
+          toast.error(errorMessage, {
+            description: validationErrors.join('\n'),
+          });
+        } else {
+          toast.error(errorMessage || 'Došlo je do greške u zahtevu.');
+        }
+      } catch {
+        // toast not available — silently continue
+      }
+    }
+
     throw new Error(errorMessage);
   }
 

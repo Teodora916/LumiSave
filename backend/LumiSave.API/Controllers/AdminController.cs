@@ -14,15 +14,18 @@ public class AdminController : ControllerBase
     private readonly IUserService _userService;
     private readonly IStripeAdminService _stripeAdminService;
     private readonly IReportService _reportService;
+    private readonly ISystemSettingService _settingService;
 
     public AdminController(
         IUserService userService,
         IStripeAdminService stripeAdminService,
-        IReportService reportService)
+        IReportService reportService,
+        ISystemSettingService settingService)
     {
         _userService = userService;
         _stripeAdminService = stripeAdminService;
         _reportService = reportService;
+        _settingService = settingService;
     }
 
     // ─── Users ───
@@ -73,4 +76,20 @@ public class AdminController : ControllerBase
         [FromQuery] string groupBy = "day",
         CancellationToken ct = default)
         => Ok(await _reportService.GetSalesReportAsync(from, to, groupBy, ct));
+
+    // ─── Settings ───
+
+    [HttpGet("settings")]
+    public async Task<IActionResult> GetSettings(CancellationToken ct)
+        => Ok(await _settingService.GetAllAsync(ct));
+
+    [HttpPut("settings/{id:guid}")]
+    public async Task<IActionResult> UpdateSetting(
+        Guid id, [FromBody] UpdateSettingDto dto, CancellationToken ct)
+        => Ok(await _settingService.UpdateAsync(id, dto.Value, ct));
+}
+
+public class UpdateSettingDto
+{
+    public string Value { get; set; } = string.Empty;
 }
