@@ -3,16 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { ShieldCheck, Lock } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 import { formatRSD } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ordersApi } from '@/api/orders';
 import { toast } from 'sonner';
-
-// Optional: Stripe imports if Stripe element logic is required
-// import { loadStripe } from '@stripe/stripe-js';
-// import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 const checkoutSchema = z.object({
   firstName: z.string().min(2, 'Ime mora imati bar 2 karaktera'),
@@ -28,63 +27,80 @@ const checkoutSchema = z.object({
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export const CheckoutPage: React.FC = () => {
-  const { items, getSubtotal, clearCart } = useCartStore();
+  const { items, getSubtotal } = useCartStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const subtotal = getSubtotal();
-  const shipping = subtotal > 5000 ? 0 : 350;
+  const shipping = subtotal > 5000 ? 0 : 490;
 
   const { register, handleSubmit, formState: { errors } } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { country: 'Srbija' }
+    defaultValues: {
+      country: 'Srbija',
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      email: user?.email ?? '',
+    },
   });
 
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsProcessing(true);
-    // 1. Simulate API call to backend POST /api/orders/checkout
-    // 2. Here backend would return Stripe Session ID
-    // 3. We would redirect to Stripe Checkout
-    
-    setTimeout(() => {
-      // MOCK SUCCESS
-      clearCart();
-      toast.success("Narudžbina je uspešno kreirana!");
-      navigate('/checkout/success?session_id=mock_session_123');
+    try {
+      const result = await ordersApi.createCheckoutSession({
+        shippingFirstName: data.firstName,
+        shippingLastName: data.lastName,
+        shippingPhone: data.phone,
+        shippingAddress: data.address,
+        shippingCity: data.city,
+        shippingPostalCode: data.postalCode,
+        shippingCountry: data.country,
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      });
+
+      // Redirect to Stripe Checkout page
+      window.location.href = result.sessionUrl;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Greška pri kreiranju narudžbine.';
+      toast.error(message);
       setIsProcessing(false);
-    }, 1500);
+    }
   };
 
   if (items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-         <h1 className="text-2xl font-bold mb-4">Vaša korpa je prazna</h1>
-         <Button onClick={() => navigate('/shop')}>Vrati se u prodavnicu</Button>
+        <h1 className="text-2xl font-bold mb-4">Vaša korpa je prazna</h1>
+        <Button onClick={() => navigate('/shop')}>Vrati se u prodavnicu</Button>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      
+
       {/* Checkout Progress Steps */}
       <div className="flex items-center justify-center mb-12">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white font-bold text-sm">1</div>
           <span className="text-sm font-medium hidden sm:block">Dostava</span>
           <div className="w-12 sm:w-24 border-t-2 border-surface-border mx-2"></div>
-          
+
           <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-surface-border text-surface-border-strong font-bold text-sm">2</div>
-          <span className="text-sm font-medium text-text-muted hidden sm:block">Plaćanje</span>
+          <span className="text-sm font-medium text-text-muted hidden sm:block">Plaćanje (Stripe)</span>
           <div className="w-12 sm:w-24 border-t-2 border-surface-border mx-2 border-dashed"></div>
-          
+
           <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-surface-border text-surface-border-strong font-bold text-sm">3</div>
           <span className="text-sm font-medium text-text-muted hidden sm:block">Potvrda</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* SHIPPING FORM */}
         <div className="lg:col-span-7">
           <Card>
@@ -143,6 +159,14 @@ export const CheckoutPage: React.FC = () => {
               </form>
             </CardContent>
           </Card>
+
+          <div className="mt-4 p-4 bg-surface-subtle rounded-xl border border-surface-border flex items-start gap-3 text-sm text-text-muted">
+            <Lock className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+            <span>
+              Plaćanje se obavlja na sigurnoj Stripe stranici. Vaši podaci su zaštićeni SSL/TLS enkripcijom.
+              Podaci kartice se ne čuvaju na našim serverima.
+            </span>
+          </div>
         </div>
 
         {/* ORDER SUMMARY */}
@@ -150,7 +174,7 @@ export const CheckoutPage: React.FC = () => {
           <Card className="sticky top-24 border-primary/20">
             <CardContent className="p-6 bg-surface-subtle rounded-2xl">
               <h3 className="text-lg font-display font-bold mb-4 border-b border-surface-border pb-4">Tvoja narudžbina</h3>
-              
+
               <div className="flex flex-col gap-3 mb-6">
                 {items.map(item => (
                   <div key={item.productId} className="flex justify-between text-sm">
@@ -161,14 +185,16 @@ export const CheckoutPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-2 pt-4 border-t border-surface-border text-sm mb-6">
-                 <div className="flex justify-between">
-                    <span className="text-text-muted">Iznos (bez dostave)</span>
-                    <span className="font-medium">{formatRSD(subtotal)}</span>
-                 </div>
-                 <div className="flex justify-between">
-                    <span className="text-text-muted">Dostava</span>
-                    <span className="font-medium">{shipping === 0 ? 'Besplatno' : formatRSD(shipping)}</span>
-                 </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Iznos (bez dostave)</span>
+                  <span className="font-medium">{formatRSD(subtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Dostava</span>
+                  <span className={shipping === 0 ? 'font-bold text-accent' : 'font-medium'}>
+                    {shipping === 0 ? 'Besplatno' : formatRSD(shipping)}
+                  </span>
+                </div>
               </div>
 
               <div className="flex justify-between items-center mb-6 pt-4 border-t border-surface-border">
@@ -176,19 +202,24 @@ export const CheckoutPage: React.FC = () => {
                 <span className="text-2xl font-display font-bold text-primary">{formatRSD(subtotal + shipping)}</span>
               </div>
 
-              <Button 
-                type="submit" 
-                form="checkout-form" 
-                variant="primary" 
-                size="xl" 
+              <Button
+                type="submit"
+                form="checkout-form"
+                variant="primary"
+                size="xl"
                 className="w-full"
                 isLoading={isProcessing}
+                leftIcon={!isProcessing ? <ShieldCheck className="w-5 h-5" /> : undefined}
               >
-                Potvrdi i plati
+                {isProcessing ? 'Preusmeravanje na Stripe...' : 'Nastavi na bezbedno plaćanje'}
               </Button>
-              <p className="text-xs text-center text-text-muted mt-4">
-                 Klikom pristajete na Uvjete korišćenja. Transakcija je sigurna.
-              </p>
+
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <Lock className="w-3.5 h-3.5 text-text-muted" />
+                <p className="text-xs text-center text-text-muted">
+                  Sigurno plaćanje putem Stripe-a
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

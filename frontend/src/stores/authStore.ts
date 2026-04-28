@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
+export interface AuthUser {
   id: string;
   email: string;
   firstName: string;
@@ -10,11 +10,13 @@ interface User {
 }
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: AuthUser, token: string, refreshToken: string) => void;
   logout: () => void;
+  setTokens: (token: string, refreshToken: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -22,9 +24,17 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
-      login: (user, token) => set({ user, token, isAuthenticated: true }),
-      logout: () => set({ user: null, token: null, isAuthenticated: false }),
+
+      login: (user, token, refreshToken) =>
+        set({ user, token, refreshToken, isAuthenticated: true }),
+
+      logout: () =>
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false }),
+
+      setTokens: (token, refreshToken) =>
+        set({ token, refreshToken }),
     }),
     {
       name: 'lumisave-auth',

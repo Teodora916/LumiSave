@@ -5,16 +5,20 @@ import { LandingPage } from '../pages/LandingPage';
 import { LEDCalculatorPage } from '../pages/calculator/LEDCalculatorPage';
 import { SmartHomeCalculatorPage } from '../pages/calculator/SmartHomeCalculatorPage';
 import { ShopPage } from '../pages/shop/ShopPage';
+import { ProductDetailPage } from '../pages/shop/ProductDetailPage';
 import { CartPage } from '../pages/cart/CartPage';
 import { CheckoutPage } from '../pages/cart/CheckoutPage';
 import { OrderSuccessPage } from '../pages/cart/OrderSuccessPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { LoginPage } from '../pages/auth/LoginPage';
+import { RegisterPage } from '../pages/auth/RegisterPage';
+import { AboutPage } from '../pages/AboutPage';
+import { ProtectedRoute } from './ProtectedRoute';
 
-// Lazy loading for performance using React.lazy / standard imports 
-// For now we'll mock the missing pages to prevent build errors
-const MockPage = ({ title }: { title: string }) => (
+// Minimal placeholder for remaining admin stubs
+const AdminMockPage = ({ title }: { title: string }) => (
   <div className="flex items-center justify-center min-h-[50vh]">
-    <h1 className="text-2xl font-bold">{title} Page</h1>
+    <h1 className="text-2xl font-bold">{title} — Coming Soon</h1>
   </div>
 );
 
@@ -25,32 +29,44 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <LandingPage /> },
       { path: 'shop', element: <ShopPage /> },
-      { path: 'shop/:id', element: <MockPage title="Product Detail" /> },
+      { path: 'shop/:slug', element: <ProductDetailPage /> },
       { path: 'cart', element: <CartPage /> },
-      { path: 'checkout', element: <CheckoutPage /> },
+      {
+        path: 'checkout',
+        element: (
+          <ProtectedRoute>
+            <CheckoutPage />
+          </ProtectedRoute>
+        ),
+      },
       { path: 'checkout/success', element: <OrderSuccessPage /> },
       { path: 'calculator/led', element: <LEDCalculatorPage /> },
       { path: 'calculator/smarthome', element: <SmartHomeCalculatorPage /> },
-      { path: 'about', element: <MockPage title="About Us" /> },
+      { path: 'about', element: <AboutPage /> },
     ],
   },
   {
+    // Auth pages use full-screen layout (no AppShell)
     path: '/auth',
     children: [
-      { path: 'login', element: <MockPage title="Login" /> },
-      { path: 'register', element: <MockPage title="Register" /> },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register', element: <RegisterPage /> },
     ],
   },
   {
     path: '/admin',
-    element: <AdminShell />,
+    element: (
+      <ProtectedRoute>
+        <AdminShell />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <AdminDashboardPage /> },
-      { path: 'transactions', element: <MockPage title="Admin Transactions" /> },
-      { path: 'orders', element: <MockPage title="Admin Orders" /> },
-      { path: 'products', element: <MockPage title="Admin Products" /> },
-      { path: 'users', element: <MockPage title="Admin Users" /> },
-      { path: 'reports', element: <MockPage title="Admin Reports" /> },
+      { path: 'transactions', element: <AdminMockPage title="Transakcije" /> },
+      { path: 'orders', element: <AdminMockPage title="Narudžbine" /> },
+      { path: 'products', element: <AdminMockPage title="Proizvodi" /> },
+      { path: 'users', element: <AdminMockPage title="Korisnici" /> },
+      { path: 'reports', element: <AdminMockPage title="Izveštaji" /> },
     ],
   },
 ]);

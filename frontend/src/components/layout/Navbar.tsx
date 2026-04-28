@@ -1,39 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { NavLink, Link } from 'react-router-dom';
-import { Menu, X, ShoppingCart, ChevronDown, User, LogOut } from 'lucide-react';
-import { useUiStore } from '@/stores/uiStore';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { Menu, X, ShoppingCart, ChevronDown, User, LogOut, Package, Zap } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
+import { authApi } from '@/api/auth';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { LanguageSwitcher } from '../ui/LanguageSwitcher';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 export const Navbar: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCalcDropdownOpen, setIsCalcDropdownOpen] = useState(false);
-  
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+
   const { getTotalItems } = useCartStore();
   const cartItemCount = getTotalItems();
   const { user, logout, isAuthenticated } = useAuthStore();
-  
-  // Track scroll position
+
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-    
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // ignore API errors on logout
+    }
+    logout();
+    toast.success('Uspešno ste se odjavili.');
+    navigate('/');
+    setIsMobileMenuOpen(false);
+  };
 
   const navLinks = [
     { name: t('nav.home', 'Početna'), path: '/' },
@@ -45,34 +52,37 @@ export const Navbar: React.FC = () => {
     <>
       <nav
         className={cn(
-          "fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300",
+          'fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300',
           scrolled
-            ? "backdrop-blur-xl bg-surface-card/80 border-b border-surface-border shadow-sm py-3"
-            : "bg-transparent py-5"
+            ? 'backdrop-blur-xl bg-surface-card/80 border-b border-surface-border shadow-sm py-3'
+            : 'bg-transparent py-5'
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center text-text-primary">
-            
+
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
-              <span className="text-2xl transition-transform group-hover:scale-110">⚡</span>
-              <span className="font-display font-bold text-2xl text-primary">LumiSave</span>
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <span className="font-display font-bold text-xl text-primary">LumiSave</span>
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
-              <NavLink 
-                to="/" 
-                className={({ isActive }) => 
-                  cn("font-medium hover:text-primary transition-colors", isActive && "text-primary font-bold")
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  cn('font-medium hover:text-primary transition-colors', isActive && 'text-primary font-bold')
                 }
               >
                 {t('nav.home', 'Početna')}
               </NavLink>
 
-              {/* Dropdown for Calculators */}
-              <div 
+              {/* Calculators dropdown */}
+              <div
                 className="relative"
                 onMouseEnter={() => setIsCalcDropdownOpen(true)}
                 onMouseLeave={() => setIsCalcDropdownOpen(false)}
@@ -86,18 +96,18 @@ export const Navbar: React.FC = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full left-0 w-48 bg-surface-card border border-surface-border rounded-lg shadow-lg overflow-hidden py-1"
+                      className="absolute top-full left-0 w-52 bg-surface-card border border-surface-border rounded-xl shadow-lg overflow-hidden py-1"
                     >
-                      <Link 
-                        to="/calculator/led" 
-                        className="block px-4 py-2 hover:bg-surface-subtle transition-colors"
+                      <Link
+                        to="/calculator/led"
+                        className="block px-4 py-2.5 hover:bg-surface-subtle transition-colors text-sm"
                         onClick={() => setIsCalcDropdownOpen(false)}
                       >
                         LED Kalkulator
                       </Link>
-                      <Link 
-                        to="/calculator/smarthome" 
-                        className="block px-4 py-2 hover:bg-surface-subtle transition-colors"
+                      <Link
+                        to="/calculator/smarthome"
+                        className="block px-4 py-2.5 hover:bg-surface-subtle transition-colors text-sm"
                         onClick={() => setIsCalcDropdownOpen(false)}
                       >
                         Smart Home Kalkulator
@@ -107,27 +117,27 @@ export const Navbar: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              <NavLink 
-                to="/shop" 
-                className={({ isActive }) => 
-                  cn("font-medium hover:text-primary transition-colors", isActive && "text-primary font-bold")
+              <NavLink
+                to="/shop"
+                className={({ isActive }) =>
+                  cn('font-medium hover:text-primary transition-colors', isActive && 'text-primary font-bold')
                 }
               >
                 {t('nav.shop', 'Prodavnica')}
               </NavLink>
 
-              <NavLink 
-                to="/about" 
-                className={({ isActive }) => 
-                  cn("font-medium hover:text-primary transition-colors", isActive && "text-primary font-bold")
+              <NavLink
+                to="/about"
+                className={({ isActive }) =>
+                  cn('font-medium hover:text-primary transition-colors', isActive && 'text-primary font-bold')
                 }
               >
                 {t('nav.about', 'O nama')}
               </NavLink>
             </div>
 
-            {/* Right section: Theme, Lang, Cart, Auth */}
-            <div className="hidden md:flex items-center space-x-4">
+            {/* Right section */}
+            <div className="hidden md:flex items-center space-x-3">
               <ThemeToggle />
               <LanguageSwitcher />
 
@@ -149,24 +159,71 @@ export const Navbar: React.FC = () => {
               </Link>
 
               {isAuthenticated ? (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 cursor-pointer border border-surface-border px-3 py-1.5 rounded-full hover:bg-surface-subtle transition-colors">
+                <div
+                  className="relative"
+                  onMouseEnter={() => setIsUserDropdownOpen(true)}
+                  onMouseLeave={() => setIsUserDropdownOpen(false)}
+                >
+                  <button className="flex items-center gap-2 border border-surface-border px-3 py-1.5 rounded-full hover:bg-surface-subtle transition-colors">
                     <User className="w-4 h-4" />
                     <span className="text-sm font-medium">{user?.firstName}</span>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={logout} aria-label="Odjavi se">
-                    <LogOut className="w-5 h-5" />
-                  </Button>
+                    <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
+                  </button>
+                  <AnimatePresence>
+                    {isUserDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full right-0 w-52 bg-surface-card border border-surface-border rounded-xl shadow-lg overflow-hidden py-1 mt-1"
+                      >
+                        <div className="px-4 py-3 border-b border-surface-border">
+                          <div className="text-sm font-semibold text-text-primary">{user?.firstName} {user?.lastName}</div>
+                          <div className="text-xs text-text-muted">{user?.email}</div>
+                        </div>
+                        <Link
+                          to="/orders"
+                          className="flex items-center gap-2 px-4 py-2.5 hover:bg-surface-subtle transition-colors text-sm"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                        >
+                          <Package className="w-4 h-4 text-text-muted" />
+                          Moje narudžbine
+                        </Link>
+                        {user?.role === 'ADMIN' && (
+                          <Link
+                            to="/admin"
+                            className="flex items-center gap-2 px-4 py-2.5 hover:bg-surface-subtle transition-colors text-sm"
+                            onClick={() => setIsUserDropdownOpen(false)}
+                          >
+                            <User className="w-4 h-4 text-text-muted" />
+                            Admin panel
+                          </Link>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-red-50 hover:text-red-600 transition-colors text-sm text-text-secondary border-t border-surface-border mt-1"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Odjavi se
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
-                <Link to="/auth/login">
-                  <Button variant="primary" size="sm">{t('nav.login', 'Prijava')}</Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to="/auth/login">
+                    <Button variant="ghost" size="sm">{t('nav.login', 'Prijava')}</Button>
+                  </Link>
+                  <Link to="/auth/register">
+                    <Button variant="primary" size="sm">Registruj se</Button>
+                  </Link>
+                </div>
               )}
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center gap-4">
+            {/* Mobile nav right */}
+            <div className="md:hidden flex items-center gap-3">
               <Link to="/cart" className="relative">
                 <ShoppingCart className="h-6 w-6" />
                 {cartItemCount > 0 && (
@@ -175,7 +232,7 @@ export const Navbar: React.FC = () => {
                   </span>
                 )}
               </Link>
-              <button 
+              <button
                 className="text-text-primary focus:outline-none"
                 onClick={() => setIsMobileMenuOpen(true)}
               >
@@ -201,12 +258,14 @@ export const Navbar: React.FC = () => {
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
               className="fixed top-0 left-0 bottom-0 w-[80%] max-w-sm bg-surface-card z-50 p-6 shadow-2xl flex flex-col"
             >
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">⚡</span>
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
+                    <Zap className="w-5 h-5 text-primary" />
+                  </div>
                   <span className="font-display font-bold text-xl text-primary">LumiSave</span>
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(false)}>
@@ -214,41 +273,60 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col space-y-4">
-                {navLinks.map(link => (
-                  <Link 
-                    key={link.path} 
+              <div className="flex flex-col space-y-1 flex-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
                     to={link.path}
-                    className="text-lg font-medium py-2 border-b border-surface-border text-text-primary"
+                    className="text-base font-medium py-3 px-3 rounded-xl text-text-primary hover:bg-surface-subtle transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.name}
                   </Link>
                 ))}
-                
-                <div className="py-2 border-b border-surface-border">
-                  <span className="text-lg font-medium text-text-muted mb-2 block">{t('nav.calculators', 'Kalkulatori')}</span>
-                  <div className="flex flex-col space-y-2 pl-4">
-                    <Link to="/calculator/led" className="text-text-primary" onClick={() => setIsMobileMenuOpen(false)}>LED Kalkulator</Link>
-                    <Link to="/calculator/smarthome" className="text-text-primary" onClick={() => setIsMobileMenuOpen(false)}>Smart Home Kalkulator</Link>
-                  </div>
+
+                <div className="py-1">
+                  <div className="text-xs font-semibold text-text-muted uppercase tracking-wider px-3 mb-2 mt-2">Kalkulatori</div>
+                  <Link to="/calculator/led" className="block px-3 py-2.5 rounded-xl text-text-primary text-sm hover:bg-surface-subtle transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    LED Kalkulator
+                  </Link>
+                  <Link to="/calculator/smarthome" className="block px-3 py-2.5 rounded-xl text-text-primary text-sm hover:bg-surface-subtle transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    Smart Home Kalkulator
+                  </Link>
                 </div>
+
+                {isAuthenticated && (
+                  <Link
+                    to="/orders"
+                    className="flex items-center gap-2 px-3 py-3 rounded-xl text-text-primary hover:bg-surface-subtle transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Package className="w-4 h-4 text-text-muted" />
+                    Moje narudžbine
+                  </Link>
+                )}
               </div>
 
-              <div className="mt-auto flex flex-col gap-4">
-                <div className="flex items-center justify-between py-4 border-t border-surface-border">
-                  <span className="font-medium text-text-primary">Tema</span>
+              <div className="mt-auto flex flex-col gap-3 pt-4 border-t border-surface-border">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-text-primary text-sm">Tema</span>
                   <ThemeToggle />
                 </div>
-                
+
                 {isAuthenticated ? (
-                  <Button variant="danger" className="w-full" onClick={() => { logout(); setIsMobileMenuOpen(false); }}>
+                  <Button variant="danger" className="w-full" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
                     Odjavi se
                   </Button>
                 ) : (
-                  <Link to="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="primary" className="w-full">Prijavi se</Button>
-                  </Link>
+                  <div className="flex flex-col gap-2">
+                    <Link to="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="secondary" className="w-full">Prijavi se</Button>
+                    </Link>
+                    <Link to="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="primary" className="w-full">Registruj se</Button>
+                    </Link>
+                  </div>
                 )}
               </div>
             </motion.div>

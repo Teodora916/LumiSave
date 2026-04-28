@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { ArrowRight, Lightbulb, Zap, LineChart, ChevronDown, Leaf } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Lightbulb, Zap, LineChart, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CountUpNumber } from '@/components/ui/CountUpNumber';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const LandingPage: React.FC = () => {
   const { t } = useTranslation();
@@ -29,8 +29,8 @@ export const LandingPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-subtle border border-surface-border mb-6"
             >
-              <Zap className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-text-primary">🌿 Nova generacija energetske efikasnosti</span>
+              <Leaf className="w-4 h-4 text-accent" />
+              <span className="text-sm font-medium text-text-primary">{t('hero.badge')}</span>
             </motion.div>
 
             <motion.h1 
@@ -39,8 +39,8 @@ export const LandingPage: React.FC = () => {
               transition={{ delay: 0.1 }}
               className="text-5xl md:text-7xl font-display font-bold text-text-primary leading-[1.1] mb-6"
             >
-              Uštedite do <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">80%</span><br />
-              na računu za struju
+              {t('hero.title_part1')} <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">80%</span><br />
+              {t('hero.title_part2')}
             </motion.h1>
 
             <motion.p 
@@ -49,7 +49,7 @@ export const LandingPage: React.FC = () => {
               transition={{ delay: 0.2 }}
               className="text-lg md:text-xl text-text-muted mb-10 max-w-2xl"
             >
-              Pametno upravljajte potrošnjom električne energije. Izračunajte uštedu sa LED rasvetom i Smart Home uređajima, i kupujte po najboljim cenama direktno iz našeg kataloga.
+              {t('hero.description')}
             </motion.p>
 
             <motion.div 
@@ -60,12 +60,12 @@ export const LandingPage: React.FC = () => {
             >
               <Link to="/calculator/led" className="w-full sm:w-auto">
                 <Button size="xl" variant="primary" className="w-full" rightIcon={<ArrowRight className="w-5 h-5" />}>
-                  Izračunaj uštedu
+                  {t('hero.cta_calc')}
                 </Button>
               </Link>
               <Link to="/shop" className="w-full sm:w-auto">
                 <Button size="xl" variant="secondary" className="w-full">
-                  Pogledaj prodavnicu
+                  {t('hero.cta_shop')}
                 </Button>
               </Link>
             </motion.div>

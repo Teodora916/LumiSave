@@ -1,0 +1,18 @@
+{
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "about": "About Us",
+    "calculators": "Calculators",
+    "login": "Login",
+    "register": "Register"
+  },
+  "hero": {
+    "badge": "New generation of energy efficiency",
+    "title_part1": "Save up to",
+    "title_part2": "on your electricity bill",
+    "description": "Smartly manage your electricity consumption. Calculate savings with LED lighting and Smart Home devices, and shop at the best prices directly from our catalog.",
+    "cta_calc": "Calculate Savings",
+    "cta_shop": "Browse Shop"
+  }
+}

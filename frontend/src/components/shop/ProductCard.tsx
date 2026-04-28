@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 export interface Product {
   id: string;
+  slug?: string;
   name: string;
   price: number;
   compareAtPrice?: number;
@@ -27,6 +28,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) => {
   const { addItem } = useCartStore();
+  const productPath = product.slug ? `/shop/${product.slug}` : `/shop/${product.id}`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent link navigation
@@ -47,7 +49,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
   };
 
   return (
-    <Link to={`/shop/${product.id}`} className="group h-full">
+    <Link to={productPath} className="group h-full">
       <Card className="h-full flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 overflow-hidden relative">
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">

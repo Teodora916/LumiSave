@@ -1,0 +1,18 @@
+{
+  "nav": {
+    "home": "Početna",
+    "shop": "Prodavnica",
+    "about": "O nama",
+    "calculators": "Kalkulator",
+    "login": "Prijava",
+    "register": "Registruj se"
+  },
+  "hero": {
+    "badge": "Nova generacija energetske efikasnosti",
+    "title_part1": "Uštedite do",
+    "title_part2": "na računu za struju",
+    "description": "Pametno upravljajte potrošnjom električne energije. Izračunajte uštedu sa LED rasvetom i Smart Home uređajima, i kupujte po najboljim cenama direktno iz našeg kataloga.",
+    "cta_calc": "Izračunaj uštedu",
+    "cta_shop": "Pogledaj prodavnicu"
+  }
+}

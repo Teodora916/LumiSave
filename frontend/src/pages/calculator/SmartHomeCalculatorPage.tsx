@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScoreRing } from '@/components/ui/ScoreRing';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { Zap, Plug, Thermometer, Lightbulb, Sun, LineChart } from 'lucide-react';
@@ -9,7 +9,7 @@ import { RangeSlider } from '@/components/ui/RangeSlider';
 
 export const SmartHomeCalculatorPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('vampire');
-  const [score, setScore] = useState(65);
+  const [score] = useState(65);
   
   // Dummy states for example logic
   const [smartPlugCount, setSmartPlugCount] = useState(0);

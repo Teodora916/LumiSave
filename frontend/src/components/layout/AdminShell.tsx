@@ -4,7 +4,7 @@ import { AdminSidebar } from './AdminSidebar';
 import { useAuthStore } from '@/stores/authStore';
 
 export const AdminShell: React.FC = () => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   // Basic auth check for admin shell
   // Note: if user?.role !== 'ADMIN' is meant, we also check it here.

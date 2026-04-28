@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
 import { Plus, Trash2, Zap, LineChart, Leaf, Clock, ShoppingCart } from 'lucide-react';
@@ -9,10 +9,9 @@ import { Select } from '@/components/ui/Select';
 import { RangeSlider } from '@/components/ui/RangeSlider';
 import { CountUpNumber } from '@/components/ui/CountUpNumber';
 import { useCalculatorStore } from '@/stores/calculatorStore';
-import type { LightingGroupInput, BulbType } from '@/stores/calculatorStore';
+import type { BulbType } from '@/stores/calculatorStore';
 import { calculateLedSavings } from '@/services/calculatorService';
-import type { LedCalculationResult } from '@/services/calculatorService';
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, LineChart as RCLineChart, Line, ReferenceLine, ReferenceArea } from 'recharts';
+import { XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, LineChart as RCLineChart, Line } from 'recharts';
 
 export const LEDCalculatorPage: React.FC = () => {
   const { 

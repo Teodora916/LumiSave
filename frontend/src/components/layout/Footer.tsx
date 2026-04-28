@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Mail } from 'lucide-react';
+import { Mail, Zap } from 'lucide-react';
 
 const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -34,7 +33,6 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
 export const Footer: React.FC = () => {
-  const { t } = useTranslation();
 
   return (
     <footer className="bg-surface-card border-t border-surface-border pt-16 pb-8 mt-auto">
@@ -43,9 +41,11 @@ export const Footer: React.FC = () => {
           
           {/* Column 1: Brand & Social */}
           <div className="flex flex-col space-y-4">
-            <Link to="/" className="flex items-center gap-2 group w-max">
-              <span className="text-2xl transition-transform group-hover:scale-110">⚡</span>
-              <span className="font-display font-bold text-2xl text-primary">LumiSave</span>
+            <Link to="/" className="flex items-center gap-2.5 group w-max">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <span className="font-display font-bold text-xl text-primary">LumiSave</span>
             </Link>
             <p className="text-text-muted mt-4 max-w-sm">
               Inovativno rešenje za optimizaciju kućnog budžeta i prelazak na energetski efikasne tehnologije.
