@@ -10,6 +10,7 @@ import { CartPage } from '../pages/cart/CartPage';
 import { CheckoutPage } from '../pages/cart/CheckoutPage';
 import { OrderSuccessPage } from '../pages/cart/OrderSuccessPage';
 import { OrdersHistoryPage } from '../pages/orders/OrdersHistoryPage';
+import { OrderDetailPage } from '../pages/orders/OrderDetailPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
@@ -47,11 +48,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'orders',
-        element: (
-          <ProtectedRoute>
-            <OrdersHistoryPage />
-          </ProtectedRoute>
-        ),
+        children: [
+          { index: true, element: <ProtectedRoute><OrdersHistoryPage /></ProtectedRoute> },
+          { path: ':id', element: <ProtectedRoute><OrderDetailPage /></ProtectedRoute> },
+        ],
       },
       { path: 'checkout/success', element: <OrderSuccessPage /> },
       { path: 'calculator/led', element: <LEDCalculatorPage /> },
@@ -77,7 +77,13 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminDashboardPage /> },
       { path: 'transactions', element: <AdminMockPage title="Transakcije" /> },
-      { path: 'orders', element: <OrdersAdminPage /> },
+      {
+        path: 'orders',
+        children: [
+          { index: true, element: <OrdersAdminPage /> },
+          { path: ':id', element: <OrderDetailPage /> },
+        ],
+      },
       { path: 'products', element: <ProductsAdminPage /> },
       { path: 'users', element: <UsersAdminPage /> },
       { path: 'settings', element: <SettingsAdminPage /> },

@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { TrendingUp, Users, ShoppingBag, CreditCard, RefreshCw, Zap } from 'lucide-react';
 import { adminApi } from '@/api/admin';
 import type { TransactionStatsDto, SalesDataPointDto } from '@/api/admin';
+import { useNavigate } from 'react-router-dom';
 
 function getDateRange(daysBack: number): { from: string; to: string } {
   const to = new Date();
@@ -17,6 +18,7 @@ function getDateRange(daysBack: number): { from: string; to: string } {
 }
 
 export const AdminDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<TransactionStatsDto | null>(null);
   const [salesData, setSalesData] = useState<SalesDataPointDto[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
@@ -243,9 +245,13 @@ export const AdminDashboardPage: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between border-b border-surface-border last:border-0 pb-4 last:pb-0">
+                  <div 
+                    key={order.id} 
+                    className="flex items-center justify-between border-b border-surface-border last:border-0 pb-4 last:pb-0 cursor-pointer hover:bg-surface-subtle/50 -mx-2 px-2 rounded-lg transition-colors group"
+                    onClick={() => navigate(`/admin/orders/${order.id}`)}
+                  >
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-text-primary">{order.id.slice(0, 8).toUpperCase()}</span>
+                      <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">{order.id.slice(0, 8).toUpperCase()}</span>
                       <span className="text-xs text-text-muted">{new Date(order.createdAt).toLocaleDateString('sr-RS')}</span>
                     </div>
                     <div className="text-right flex flex-col">

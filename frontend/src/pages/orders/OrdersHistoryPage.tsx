@@ -48,7 +48,7 @@ export const OrdersHistoryPage: React.FC = () => {
           {orders.map(order => {
             const statusInfo = statusMap[order.status] || { label: order.status, color: 'text-gray-500 bg-gray-50 border-gray-200', icon: <Package className="w-4 h-4" /> };
             return (
-              <Card key={order.id} className="hover:shadow-md transition-shadow">
+              <Card key={order.id} className="hover:shadow-md transition-shadow group">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div>
@@ -68,6 +68,14 @@ export const OrdersHistoryPage: React.FC = () => {
                         <div className="text-sm text-text-muted mb-1">{order.itemCount} {order.itemCount === 1 ? 'artikal' : 'artikala'}</div>
                         <div className="font-bold text-lg text-primary">{formatRSD(order.totalAmount)}</div>
                       </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        className="group-hover:bg-primary group-hover:text-white transition-colors"
+                      >
+                        Detalji
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

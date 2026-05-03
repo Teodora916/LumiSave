@@ -26,7 +26,11 @@ export interface RegisterRequestDto {
 
 export const authApi = {
   login: (dto: LoginRequestDto) =>
-    apiClient.post<AuthResponseDto>('/api/auth/login', dto, { skipAuth: true }),
+    apiClient.post<AuthResponseDto>('/api/auth/login', dto, { 
+      skipAuth: true, 
+      skipRedirect: true,
+      silentError: true 
+    }),
 
   register: (dto: RegisterRequestDto) =>
     apiClient.post<AuthResponseDto>('/api/auth/register', dto, { skipAuth: true }),

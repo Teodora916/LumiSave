@@ -14,12 +14,14 @@ function getToken(): string | null {
 
 type RequestOptions = RequestInit & {
   skipAuth?: boolean;
+  /** Set to true to suppress the automatic redirect to login on 401. */
+  skipRedirect?: boolean;
   /** Set to true to suppress the automatic error toast (use when errors are shown inline). */
   silentError?: boolean;
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { skipAuth, silentError, ...fetchOptions } = options;
+  const { skipAuth, skipRedirect, silentError, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -45,7 +47,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     headers,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !skipRedirect) {
     try {
       localStorage.removeItem('lumisave-auth');
     } catch {

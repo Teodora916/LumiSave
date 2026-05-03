@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { adminApi, type OrderSummaryDto } from '@/api/admin';
 import { toast } from 'sonner';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const OrdersAdminPage: React.FC = () => {
   const [orders, setOrders] = useState<OrderSummaryDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -86,9 +88,11 @@ export const OrdersAdminPage: React.FC = () => {
                   </tr>
                 ) : (
                   orders.map((order) => (
-                    <tr key={order.id} className="border-b border-surface-border">
+                    <tr key={order.id} className="border-b border-surface-border hover:bg-surface-subtle/50 transition-colors group">
                       <td className="px-6 py-4 font-medium text-text-primary">
-                        {order.id.slice(0, 8).toUpperCase()}
+                        <Link to={`/admin/orders/${order.id}`} className="hover:text-primary hover:underline underline-offset-4">
+                          {order.id.slice(0, 8).toUpperCase()}
+                        </Link>
                       </td>
                       <td className="px-6 py-4 text-xs text-text-muted">
                         {new Date(order.createdAt).toLocaleDateString('sr-RS')}
@@ -99,9 +103,9 @@ export const OrdersAdminPage: React.FC = () => {
                           {formatStatus(order.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 space-x-2 flex">
+                      <td className="px-6 py-4 space-x-2 flex items-center">
                         <select
-                          className="bg-surface-subtle border border-surface-border rounded px-2 py-1 text-xs"
+                          className="bg-surface-subtle border border-surface-border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary outline-none"
                           value={order.status}
                           onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
                         >
@@ -112,6 +116,15 @@ export const OrdersAdminPage: React.FC = () => {
                           <option value="Delivered">Dostavljeno</option>
                           <option value="Cancelled">Otkazano</option>
                         </select>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0" 
+                          onClick={() => navigate(`/admin/orders/${order.id}`)}
+                        >
+                          <span className="sr-only">Detalji</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </Button>
                       </td>
                     </tr>
                   ))

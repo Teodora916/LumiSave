@@ -225,7 +225,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 4. STATS SECTION */}
-      <section className="py-24 bg-surface-card dark:bg-[#0A120E]">
+      <section className="py-24 bg-surface-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 divide-x divide-surface-border">
             <div className="text-center px-4">
