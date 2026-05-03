@@ -20,8 +20,8 @@ export interface CartDto {
 }
 
 export interface AddToCartDto {
-  productId: string;
-  quantity: number;
+  ProductId: string;
+  Quantity: number;
 }
 
 export interface UpdateCartItemDto {

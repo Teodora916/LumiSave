@@ -67,8 +67,8 @@ export const CheckoutPage: React.FC = () => {
 
       for (const item of items) {
         await cartApi.addItem({
-          productId: item.productId,
-          quantity: item.quantity,
+          ProductId: item.productId,
+          Quantity: item.quantity,
         });
       }
 

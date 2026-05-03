@@ -8,6 +8,10 @@ public class LedCalculatorInputDto
 {
     public List<LightingGroupInputDto> LightingGroups { get; set; } = [];
     public decimal ElectricityPriceRsd { get; set; } = 7.5m;
+    public string TariffType { get; set; } = "Single"; // Single, Dual, Custom
+    public decimal? CustomPricePerKwh { get; set; }
+    public decimal ApprovedPowerKw { get; set; } = 6.9m;
+    public string? ConsumptionZone { get; set; } // Green, Blue, Red
 }
 
 public class LightingGroupInputDto
@@ -17,6 +21,8 @@ public class LightingGroupInputDto
     public int WattageOld { get; set; }
     public int BulbCount { get; set; }
     public decimal DailyUsageHours { get; set; }
+    public decimal DailyUsageHoursHighTariff { get; set; }
+    public decimal DailyUsageHoursLowTariff { get; set; }
     public decimal? LedPricePerBulb { get; set; }
 }
 
@@ -71,7 +77,6 @@ public class SmartHomeCalculatorInputDto
     public SmartPlugInputDto? SmartPlug { get; set; }
     public ThermostatInputDto? Thermostat { get; set; }
     public LightingAutomationInputDto? LightingAutomation { get; set; }
-    public SolarInputDto? Solar { get; set; }
     public decimal? ExistingLedAnnualKwh { get; set; }
 }
 
@@ -111,15 +116,6 @@ public class LightingAutomationInputDto
     public decimal EquipmentCostRsd { get; set; }
 }
 
-public class SolarInputDto
-{
-    public decimal AvailableRoofAreaM2 { get; set; }
-    public decimal AnnualElectricityCostRsd { get; set; }
-    public bool HasNetMetering { get; set; } = false;
-    public decimal NetMeteringRateRsd { get; set; } = 4.0m;
-    public decimal InstallationCostRsd { get; set; }
-}
-
 // Result DTOs
 public class SmartHomeCalculatorResultDto
 {
@@ -130,7 +126,6 @@ public class SmartHomeCalculatorResultDto
     public SmartPlugResultDto? SmartPlugResult { get; set; }
     public ThermostatResultDto? ThermostatResult { get; set; }
     public LightingAutomationResultDto? LightingAutomationResult { get; set; }
-    public SolarResultDto? SolarResult { get; set; }
     public decimal TotalAnnualSavingsRsd { get; set; }
     public decimal TotalAnnualSavingsKwh { get; set; }
     public decimal TotalInvestmentRsd { get; set; }
@@ -190,18 +185,6 @@ public class AutomationBreakdownDto
     public decimal SavingsPercent { get; set; }
     public decimal AnnualSavingsRsd { get; set; }
 }
-
-public class SolarResultDto
-{
-    public decimal SystemCapacityKwp { get; set; }
-    public decimal AnnualProductionKwh { get; set; }
-    public decimal AnnualSavingsRsd { get; set; }
-    public decimal InvestmentRsd { get; set; }
-    public int PaybackMonths { get; set; }
-    public decimal Co2OffsetKg { get; set; }
-    public decimal CoveredConsumptionPercent { get; set; }
-}
-
 // Session DTOs
 public class CalculatorSessionSummaryDto
 {

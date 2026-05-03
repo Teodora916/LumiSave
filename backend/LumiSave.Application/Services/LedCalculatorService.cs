@@ -65,16 +65,22 @@ public class LedCalculatorService : ILedCalculatorService
         foreach (var group in input.LightingGroups)
         {
             var ledW = FindLedEquivalent(group.BulbType, group.WattageOld);
-            var currentKwh = (group.WattageOld * group.BulbCount * (double)group.DailyUsageHours * 365) / 1000.0;
-            var ledKwh = (ledW * group.BulbCount * (double)group.DailyUsageHours * 365) / 1000.0;
+            decimal dailyHigh = input.TariffType == "Dual" ? group.DailyUsageHoursHighTariff : group.DailyUsageHours;
+            decimal dailyLow = input.TariffType == "Dual" ? group.DailyUsageHoursLowTariff : 0;
+
+            var currentKwhHigh = (decimal)(group.WattageOld * group.BulbCount * (double)dailyHigh * 365) / 1000m;
+            var currentKwhLow = (decimal)(group.WattageOld * group.BulbCount * (double)dailyLow * 365) / 1000m;
+            var currentKwh = currentKwhHigh + currentKwhLow;
+
+            var ledKwhHigh = (decimal)(ledW * group.BulbCount * (double)dailyHigh * 365) / 1000m;
+            var ledKwhLow = (decimal)(ledW * group.BulbCount * (double)dailyLow * 365) / 1000m;
+            var ledKwh = ledKwhHigh + ledKwhLow;
+
             var savingsKwh = currentKwh - ledKwh;
-            var savingsRsd = (decimal)savingsKwh * input.ElectricityPriceRsd;
+            
             var pricePerBulb = group.LedPricePerBulb ??
                 (DefaultLedPrices.TryGetValue(group.BulbType, out var p) ? p : 790m);
             var investmentRsd = pricePerBulb * group.BulbCount;
-            var paybackMonths = savingsRsd > 0
-                ? (int)Math.Ceiling((double)investmentRsd / ((double)savingsRsd / 12))
-                : 999;
             var savingPercent = group.WattageOld > 0
                 ? ((group.WattageOld - ledW) * 100.0 / group.WattageOld)
                 : 0;
@@ -87,12 +93,13 @@ public class LedCalculatorService : ILedCalculatorService
                 WattageLed = ledW,
                 BulbCount = group.BulbCount,
                 DailyUsageHours = group.DailyUsageHours,
-                CurrentAnnualKwh = (decimal)currentKwh,
-                LedAnnualKwh = (decimal)ledKwh,
-                AnnualSavingsKwh = (decimal)savingsKwh,
-                AnnualSavingsRsd = savingsRsd,
+                CurrentAnnualKwh = currentKwh,
+                LedAnnualKwh = ledKwh,
+                AnnualSavingsKwh = savingsKwh,
+                AnnualSavingsRsd = 0, // will calculate later based on ratio
                 InvestmentRsd = investmentRsd,
-                PaybackMonths = paybackMonths,
+                PaybackMonths = 999, // will calculate later
+
                 WattageSavingPercent = (decimal)savingPercent
             });
 
@@ -105,11 +112,39 @@ public class LedCalculatorService : ILedCalculatorService
             }
         }
 
-        var totalCurrentKwh = groupResults.Sum(g => g.CurrentAnnualKwh);
-        var totalLedKwh = groupResults.Sum(g => g.LedAnnualKwh);
+        decimal totalOldKwhHigh = 0;
+        decimal totalOldKwhLow = 0;
+        decimal totalLedKwhHigh = 0;
+        decimal totalLedKwhLow = 0;
+        foreach (var group in input.LightingGroups)
+        {
+            decimal dailyHigh = input.TariffType == "Dual" ? group.DailyUsageHoursHighTariff : group.DailyUsageHours;
+            decimal dailyLow = input.TariffType == "Dual" ? group.DailyUsageHoursLowTariff : 0;
+            totalOldKwhHigh += (decimal)(group.WattageOld * group.BulbCount * (double)dailyHigh * 365) / 1000m;
+            totalOldKwhLow += (decimal)(group.WattageOld * group.BulbCount * (double)dailyLow * 365) / 1000m;
+            
+            var ledW = FindLedEquivalent(group.BulbType, group.WattageOld);
+            totalLedKwhHigh += (decimal)(ledW * group.BulbCount * (double)dailyHigh * 365) / 1000m;
+            totalLedKwhLow += (decimal)(ledW * group.BulbCount * (double)dailyLow * 365) / 1000m;
+        }
+
+        var oldMonthlyBill = CalculateMonthlyBill(totalOldKwhHigh / 12, totalOldKwhLow / 12, input.ApprovedPowerKw, input.TariffType, input.CustomPricePerKwh, input.ConsumptionZone);
+        var newMonthlyBill = CalculateMonthlyBill(totalLedKwhHigh / 12, totalLedKwhLow / 12, input.ApprovedPowerKw, input.TariffType, input.CustomPricePerKwh, input.ConsumptionZone);
+        var totalSavingsRsd = Math.Max(0, (oldMonthlyBill - newMonthlyBill) * 12);
+
+        var totalCurrentKwh = totalOldKwhHigh + totalOldKwhLow;
+        var totalLedKwh = totalLedKwhHigh + totalLedKwhLow;
         var totalSavingsKwh = totalCurrentKwh - totalLedKwh;
-        var totalSavingsRsd = groupResults.Sum(g => g.AnnualSavingsRsd);
         var totalInvestment = groupResults.Sum(g => g.InvestmentRsd);
+        
+        foreach (var gr in groupResults)
+        {
+            if (totalSavingsKwh > 0)
+            {
+                gr.AnnualSavingsRsd = totalSavingsRsd * (gr.AnnualSavingsKwh / totalSavingsKwh);
+            }
+            gr.PaybackMonths = gr.AnnualSavingsRsd > 0 ? (int)Math.Ceiling((double)gr.InvestmentRsd / ((double)gr.AnnualSavingsRsd / 12)) : 999;
+        }
         
         var co2Factor = await _settingService.GetDecimalAsync("Co2FactorKgPerKwh", 0.417m, ct);
         var co2 = totalSavingsKwh * co2Factor;
@@ -121,7 +156,7 @@ public class LedCalculatorService : ILedCalculatorService
             ? (totalSavingsKwh / totalCurrentKwh * 100)
             : 0;
 
-        var projection = GenerateTenYearProjection(totalSavingsRsd, totalInvestment, totalCurrentKwh, input.ElectricityPriceRsd);
+        var projection = GenerateTenYearProjection(totalSavingsRsd, totalInvestment, oldMonthlyBill * 12);
 
         Guid? sessionId = null;
         if (userId.HasValue)
@@ -204,13 +239,11 @@ public class LedCalculatorService : ILedCalculatorService
     }
 
     private static List<YearlyProjectionDto> GenerateTenYearProjection(
-        decimal annualSavingsRsd, decimal investmentRsd,
-        decimal currentAnnualKwh, decimal electricityPriceRsd)
+        decimal annualSavingsRsd, decimal investmentRsd, decimal annualCostWithoutLed)
     {
         var projection = new List<YearlyProjectionDto>();
         decimal cumulativeSavings = -investmentRsd;
         decimal cumulativeWithoutLed = 0;
-        decimal annualCostWithoutLed = currentAnnualKwh * electricityPriceRsd;
         decimal annualCostWithLed = investmentRsd;
 
         for (int year = 1; year <= 10; year++)
@@ -229,5 +262,70 @@ public class LedCalculatorService : ILedCalculatorService
         }
 
         return projection;
+    }
+
+    private static decimal CalculateMonthlyBill(decimal monthlyKwhHigh, decimal monthlyKwhLow, decimal approvedPowerKw, string tariffType, decimal? customPrice, string? forcedZone)
+    {
+        decimal fixedCosts = (approvedPowerKw * 60.8947m) + 160.67m;
+        if (tariffType == "Custom" && customPrice.HasValue)
+        {
+            return fixedCosts + ((monthlyKwhHigh + monthlyKwhLow) * customPrice.Value);
+        }
+
+        decimal totalKwh = monthlyKwhHigh + monthlyKwhLow;
+
+        // If user forced a zone, use fixed prices for the ENTIRE consumption
+        if (!string.IsNullOrEmpty(forcedZone))
+        {
+            decimal vt = 0, nt = 0, jt = 0;
+            switch (forcedZone)
+            {
+                case "Green": vt = 9.6136m; nt = 2.4034m; jt = 8.4119m; break;
+                case "Blue": vt = 14.4203m; nt = 3.6051m; jt = 12.6178m; break;
+                case "Red": vt = 28.8407m; nt = 7.2102m; jt = 25.2356m; break;
+            }
+
+            if (tariffType == "Dual")
+                return fixedCosts + (monthlyKwhHigh * vt) + (monthlyKwhLow * nt);
+            else
+                return fixedCosts + (totalKwh * jt);
+        }
+
+        decimal highRatio = totalKwh > 0 ? (monthlyKwhHigh / totalKwh) : 0;
+        decimal lowRatio = totalKwh > 0 ? (monthlyKwhLow / totalKwh) : 0;
+
+        decimal cost = 0;
+        decimal remainingKwh = totalKwh;
+
+        decimal greenKwh = Math.Min(remainingKwh, 350m);
+        if (greenKwh > 0)
+        {
+            if (tariffType == "Dual")
+                cost += (greenKwh * highRatio * 9.6136m) + (greenKwh * lowRatio * 2.4034m);
+            else
+                cost += greenKwh * 8.4119m;
+            remainingKwh -= greenKwh;
+        }
+
+        decimal blueKwh = Math.Min(remainingKwh, 850m);
+        if (blueKwh > 0)
+        {
+            if (tariffType == "Dual")
+                cost += (blueKwh * highRatio * 14.4203m) + (blueKwh * lowRatio * 3.6051m);
+            else
+                cost += blueKwh * 12.6178m;
+            remainingKwh -= blueKwh;
+        }
+
+        decimal redKwh = remainingKwh;
+        if (redKwh > 0)
+        {
+            if (tariffType == "Dual")
+                cost += (redKwh * highRatio * 28.8407m) + (redKwh * lowRatio * 7.2102m);
+            else
+                cost += redKwh * 25.2356m;
+        }
+
+        return fixedCosts + cost;
     }
 }

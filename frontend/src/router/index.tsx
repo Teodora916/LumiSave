@@ -9,6 +9,7 @@ import { ProductDetailPage } from '../pages/shop/ProductDetailPage';
 import { CartPage } from '../pages/cart/CartPage';
 import { CheckoutPage } from '../pages/cart/CheckoutPage';
 import { OrderSuccessPage } from '../pages/cart/OrderSuccessPage';
+import { OrdersHistoryPage } from '../pages/orders/OrdersHistoryPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
@@ -44,6 +45,14 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: 'orders',
+        element: (
+          <ProtectedRoute>
+            <OrdersHistoryPage />
+          </ProtectedRoute>
+        ),
+      },
       { path: 'checkout/success', element: <OrderSuccessPage /> },
       { path: 'calculator/led', element: <LEDCalculatorPage /> },
       { path: 'calculator/smarthome', element: <SmartHomeCalculatorPage /> },
@@ -61,7 +70,7 @@ export const router = createBrowserRouter([
   {
     path: '/admin',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute adminOnly>
         <AdminShell />
       </ProtectedRoute>
     ),

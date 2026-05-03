@@ -119,6 +119,18 @@ public class OrderService : IOrderService
 
         var createdOrder = await _orderRepo.AddAsync(order, ct);
 
+        // Reduce stock
+        foreach (var item in cartItems)
+        {
+            var product = await _productRepo.GetByIdAsync(item.ProductId, ct);
+            if (product != null)
+            {
+                product.StockQuantity -= item.Quantity;
+                if (product.StockQuantity < 0) product.StockQuantity = 0;
+                await _productRepo.UpdateAsync(product, ct);
+            }
+        }
+
         // Build Stripe line items
         var lineItems = cartItems.Select(i =>
         {

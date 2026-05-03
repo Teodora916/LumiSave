@@ -21,7 +21,11 @@ import {
 
 export const LEDCalculatorPage: React.FC = () => {
   const {
+    tariffType, setTariffType,
+    customPricePerKwh, setCustomPricePerKwh,
+    approvedPowerKw, setApprovedPowerKw,
     electricityPrice, setElectricityPrice,
+    consumptionZone, setConsumptionZone,
     lightingGroups, addLightingGroup, updateLightingGroup, removeLightingGroup,
     ledResult, setLedResult,
   } = useCalculatorStore();
@@ -44,14 +48,20 @@ export const LEDCalculatorPage: React.FC = () => {
 
     calculateMutation.mutate({
       electricityPriceRsd: electricityPrice,
+      tariffType: tariffType,
+      customPricePerKwh: customPricePerKwh,
+      approvedPowerKw: approvedPowerKw,
       lightingGroups: lightingGroups.map((g) => ({
         roomName: g.roomName || 'Soba',
         bulbType: g.bulbType,
         wattageOld: g.wattageOld,
         bulbCount: g.bulbCount,
         dailyUsageHours: g.dailyUsageHours,
+        dailyUsageHoursHighTariff: g.dailyUsageHoursHighTariff,
+        dailyUsageHoursLowTariff: g.dailyUsageHoursLowTariff,
         ledPricePerBulb: g.ledPricePerBulb,
       })),
+      consumptionZone: consumptionZone,
     });
   };
 
@@ -63,6 +73,8 @@ export const LEDCalculatorPage: React.FC = () => {
       wattageOld: 60,
       bulbCount: 1,
       dailyUsageHours: 4,
+      dailyUsageHoursHighTariff: 3,
+      dailyUsageHoursLowTariff: 1,
     });
   };
 
@@ -115,19 +127,107 @@ export const LEDCalculatorPage: React.FC = () => {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Zap className="w-5 h-5 text-accent"/> Cena struje</CardTitle>
-              <CardDescription>Unesite prosečnu cenu po kilovat-satu u vašoj tarifi.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><Zap className="w-5 h-5 text-accent"/> Parametri obračuna</CardTitle>
+              <CardDescription>Izaberite tip brojila i unesite odobrenu snagu iz računa.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <Input
-                  type="number"
-                  value={electricityPrice}
-                  onChange={(e) => setElectricityPrice(Number(e.target.value))}
-                  className="w-32"
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-text-muted mb-1 block">Tip brojila</label>
+                <Select
+                  options={[
+                    { value: 'Single', label: 'Jednotarifno' },
+                    { value: 'Dual', label: 'Dvotarifno' },
+                    { value: 'Custom', label: 'Slobodan unos cene' }
+                  ]}
+                  value={tariffType}
+                  onChange={(v) => setTariffType(v as any)}
                 />
-                <span className="text-text-muted font-medium">RSD/kWh</span>
               </div>
+
+              {tariffType === 'Custom' ? (
+                <div>
+                  <label className="text-sm font-semibold text-text-muted mb-1 block">Prosečna cena (RSD/kWh)</label>
+                  <Input
+                    type="number"
+                    value={customPricePerKwh}
+                    onChange={(e) => setCustomPricePerKwh(Number(e.target.value))}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-4 text-sm text-text-muted p-3 bg-surface-subtle rounded-lg border border-surface-border">
+                  <span>Cena po kWh se računa automatski prema EPS zonama (Zelena, Plava, Crvena).</span>
+                </div>
+              )}
+
+              <div>
+                <label className="text-sm font-semibold text-text-muted mb-1 block">Odobrena snaga (kW)</label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={approvedPowerKw}
+                    onChange={(e) => setApprovedPowerKw(Number(e.target.value))}
+                    className="w-32"
+                  />
+                  <span className="text-xs text-text-muted">Podrazumevano 6.9 kW (za fiksan deo računa).</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-text-muted mb-2 block">Mesečna zona potrošnje</label>
+                <div className="flex gap-2">
+                  {[
+                    { id: 'Green', label: 'Zelena', range: '≤350 kWh', color: 'bg-emerald-500', border: 'border-emerald-600' },
+                    { id: 'Blue', label: 'Plava', range: '351-1200', color: 'bg-blue-500', border: 'border-blue-600' },
+                    { id: 'Red', label: 'Crvena', range: '>1200 kWh', color: 'bg-red-500', border: 'border-red-600' }
+                  ].map((z) => (
+                    <button
+                      key={z.id}
+                      onClick={() => setConsumptionZone(z.id as any)}
+                      className={`flex-1 py-2 px-1 rounded-xl text-[10px] font-bold transition-all border ${
+                        consumptionZone === z.id 
+                          ? `${z.color} text-white ${z.border} shadow-sm`
+                          : 'bg-surface-subtle text-text-muted border-surface-border hover:border-text-muted'
+                      }`}
+                    >
+                      <div className="uppercase">{z.label}</div>
+                      <div className="opacity-80 font-medium">{z.range}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {tariffType !== 'Custom' && (
+                <div className="p-3 bg-surface-subtle rounded-xl border border-surface-border space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold text-text-muted uppercase tracking-wider border-b border-surface-border pb-2">
+                    <span>Cenovnik ({consumptionZone === 'Green' ? 'Zelena' : consumptionZone === 'Blue' ? 'Plava' : 'Crvena'} zona)</span>
+                    <span>RSD/kWh</span>
+                  </div>
+                  {tariffType === 'Single' ? (
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-text-secondary font-medium">Jednotarifno brojilo</span>
+                      <span className="font-bold text-primary text-base">
+                        {consumptionZone === 'Green' ? '8.41' : consumptionZone === 'Blue' ? '12.61' : '25.23'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-sm items-center">
+                        <span className="text-text-secondary font-medium">Viša tarifa (Dan)</span>
+                        <span className="font-bold text-primary text-base">
+                          {consumptionZone === 'Green' ? '9.61' : consumptionZone === 'Blue' ? '14.42' : '28.84'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm items-center">
+                        <span className="text-text-secondary font-medium">Niža tarifa (Noć)</span>
+                        <span className="font-bold text-blue-500 text-base">
+                          {consumptionZone === 'Green' ? '2.40' : consumptionZone === 'Blue' ? '3.60' : '7.21'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -201,15 +301,44 @@ export const LEDCalculatorPage: React.FC = () => {
                       </div>
 
                       <div className="sm:col-span-2 mt-2">
-                        <label className="text-xs font-semibold text-text-muted mb-3 flex justify-between">
-                          <span>Dnevno korišćenje</span>
-                          <span className="text-primary font-bold">{group.dailyUsageHours} h</span>
-                        </label>
-                        <RangeSlider
-                          min={0.5} max={24} step={0.5}
-                          value={group.dailyUsageHours}
-                          onChange={(v) => updateLightingGroup(group.id, { dailyUsageHours: v })}
-                        />
+                        {tariffType === 'Dual' ? (
+                          <div className="space-y-6">
+                            <div>
+                              <label className="text-xs font-semibold text-text-muted mb-3 flex justify-between">
+                                <span>Viša tarifa (dnevno korišćenje)</span>
+                                <span className="text-primary font-bold">{group.dailyUsageHoursHighTariff} h</span>
+                              </label>
+                              <RangeSlider
+                                min={0} max={24} step={0.5}
+                                value={group.dailyUsageHoursHighTariff}
+                                onChange={(v) => updateLightingGroup(group.id, { dailyUsageHoursHighTariff: v })}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-text-muted mb-3 flex justify-between">
+                                <span>Niža tarifa (dnevno korišćenje)</span>
+                                <span className="text-blue-500 font-bold">{group.dailyUsageHoursLowTariff} h</span>
+                              </label>
+                              <RangeSlider
+                                min={0} max={24} step={0.5}
+                                value={group.dailyUsageHoursLowTariff}
+                                onChange={(v) => updateLightingGroup(group.id, { dailyUsageHoursLowTariff: v })}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="text-xs font-semibold text-text-muted mb-3 flex justify-between">
+                              <span>Dnevno korišćenje</span>
+                              <span className="text-primary font-bold">{group.dailyUsageHours} h</span>
+                            </label>
+                            <RangeSlider
+                              min={0.5} max={24} step={0.5}
+                              value={group.dailyUsageHours}
+                              onChange={(v) => updateLightingGroup(group.id, { dailyUsageHours: v })}
+                            />
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

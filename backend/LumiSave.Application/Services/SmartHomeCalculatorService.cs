@@ -24,7 +24,6 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
     private static readonly Dictionary<string, (decimal Avg, decimal Min, decimal Max)> DeviceStandbyProfiles = new()
     {
         ["Television"]      = (1.5m,  0.5m,  3.0m),
-        ["GamingConsole"]   = (0.7m,  0.5m,  1.0m),
         ["DesktopComputer"] = (10.0m, 5.0m,  15.0m),
         ["Monitor"]         = (2.0m,  0.5m,  5.0m),
         ["CableBoxDVR"]     = (22.0m, 15.0m, 30.0m),
@@ -35,8 +34,9 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
         ["HomeTheater"]     = (3.0m,  1.0m,  5.0m),
         ["Printer"]         = (5.5m,  3.0m,  8.0m),
         ["AirConditioner"]  = (12.0m, 5.0m,  20.0m),
-        ["WasherDryer"]     = (2.0m,  1.0m,  3.0m),
-        ["SpaceHeater"]     = (1.0m,  0.5m,  2.0m),
+        ["WashingMachine"]  = (2.0m,  1.0m,  3.0m),
+        ["Dishwasher"]      = (2.5m,  1.5m,  4.0m),
+        ["SmartOven"]       = (3.0m,  1.5m,  4.5m),
     };
 
     private static readonly Dictionary<string, (decimal Min, decimal Max)> AutomationSavings = new()
@@ -164,24 +164,8 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
             }
         }
 
-        // Solar (max 15 pts)
-        if (input.Solar != null)
-        {
-            var solarInsolation = await _settingService.GetDecimalAsync("SolarInsolationSerbia", 1400m, ct);
-            var panelEfficiency = await _settingService.GetDecimalAsync("SolarPanelEfficiency", 0.20m, ct);
-            var co2Factor = await _settingService.GetDecimalAsync("Co2FactorKgPerKwh", 0.417m, ct);
+        // Solar section removed
 
-            var solarResult = CalculateSolar(input.Solar, input.ElectricityPriceRsd, solarInsolation, panelEfficiency, co2Factor);
-            result.SolarResult = solarResult;
-            totalSavingsRsd += solarResult.AnnualSavingsRsd;
-            totalSavingsKwh += solarResult.AnnualProductionKwh;
-            totalInvestment += solarResult.InvestmentRsd;
-            score += 15;
-            insights.Add($"Solar system could offset {solarResult.CoveredConsumptionPercent:F0}% of your electricity consumption.");
-
-            var solarProducts = await _productRepo.GetSmartDevicesByCategoryAsync("Solar", ct);
-            recommendedProducts.AddRange(_mapper.Map<IEnumerable<ProductListDto>>(solarProducts).Take(1));
-        }
 
         score = Math.Min(100, score);
         var grade = score switch
@@ -237,7 +221,7 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
                 SmartPlugSavingsRsd = result.SmartPlugResult?.AnnualSavingsRsd ?? 0,
                 ThermostatSavingsRsd = result.ThermostatResult?.AnnualSavingsRsd ?? 0,
                 LightingAutomationSavingsRsd = result.LightingAutomationResult?.TotalAnnualSavingsRsd ?? 0,
-                SolarSavingsRsd = result.SolarResult?.AnnualSavingsRsd ?? 0
+                SolarSavingsRsd = 0 // Keeping property if it exists in DB, otherwise safe to leave 0
             };
             var saved = await _sessionRepo.AddAsync(session, ct);
             result.SessionId = saved.Id;
@@ -364,33 +348,7 @@ public class SmartHomeCalculatorService : ISmartHomeCalculatorService
         };
     }
 
-    private static SolarResultDto CalculateSolar(SolarInputDto input, decimal electricityPrice, decimal solarInsolation, decimal panelEfficiency, decimal co2Factor)
-    {
-        var capacityKwp = input.AvailableRoofAreaM2 * panelEfficiency;
-        var annualProductionKwh = capacityKwp * solarInsolation;
-        var annualSavings = annualProductionKwh * electricityPrice;
-
-        if (input.HasNetMetering)
-            annualSavings += annualProductionKwh * input.NetMeteringRateRsd * 0.2m; // 20% exported
-
-        var co2OffsetKg = annualProductionKwh * co2Factor;
-        var coveredConsumptionPct = input.AnnualElectricityCostRsd > 0
-            ? (annualSavings / input.AnnualElectricityCostRsd * 100) : 0;
-        var payback = annualSavings > 0
-            ? (int)Math.Ceiling((double)input.InstallationCostRsd / ((double)annualSavings / 12))
-            : 999;
-
-        return new SolarResultDto
-        {
-            SystemCapacityKwp = capacityKwp,
-            AnnualProductionKwh = annualProductionKwh,
-            AnnualSavingsRsd = annualSavings,
-            InvestmentRsd = input.InstallationCostRsd,
-            PaybackMonths = payback,
-            Co2OffsetKg = co2OffsetKg,
-            CoveredConsumptionPercent = Math.Min(100, coveredConsumptionPct)
-        };
-    }
+    // CalculateSolar removed
 
     private static List<YearlyProjectionDto> GenerateTenYearProjection(
         decimal annualSavingsRsd, decimal investmentRsd, decimal electricityPrice)

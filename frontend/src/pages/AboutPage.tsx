@@ -222,7 +222,7 @@ export const AboutPage: React.FC = () => {
       </section>
 
       {/* TEAM */}
-      <section className="py-24 bg-surface-bg">
+      {/* <section className="py-24 bg-surface-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-display font-bold text-text-primary mb-4">Tim iza LumiSave-a</h2>
@@ -254,7 +254,7 @@ export const AboutPage: React.FC = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA */}
       <section className="relative overflow-hidden bg-primary py-20 text-white">

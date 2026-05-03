@@ -10,12 +10,18 @@ export interface LightingGroupInputDto {
   wattageOld: number;
   bulbCount: number;
   dailyUsageHours: number;
+  dailyUsageHoursHighTariff: number;
+  dailyUsageHoursLowTariff: number;
   ledPricePerBulb?: number;
 }
 
 export interface LedCalculatorInputDto {
   lightingGroups: LightingGroupInputDto[];
   electricityPriceRsd: number;
+  tariffType: 'Single' | 'Dual' | 'Custom';
+  customPricePerKwh?: number;
+  approvedPowerKw: number;
+  consumptionZone?: 'Green' | 'Blue' | 'Red';
 }
 
 export interface LightingGroupResultDto {
@@ -108,21 +114,12 @@ export interface LightingAutomationInputDto {
   equipmentCostRsd: number;
 }
 
-export interface SolarInputDto {
-  availableRoofAreaM2: number;
-  annualElectricityCostRsd: number;
-  hasNetMetering: boolean;
-  netMeteringRateRsd: number;
-  installationCostRsd: number;
-}
-
 export interface SmartHomeCalculatorInputDto {
   electricityPriceRsd: number;
   vampirePower?: VampirePowerInputDto;
   smartPlug?: SmartPlugInputDto;
   thermostat?: ThermostatInputDto;
   lightingAutomation?: LightingAutomationInputDto;
-  solar?: SolarInputDto;
   existingLedAnnualKwh?: number;
 }
 
@@ -154,16 +151,6 @@ export interface ThermostatResultDto {
   paybackMonths: number;
 }
 
-export interface SolarResultDto {
-  systemCapacityKwp: number;
-  annualProductionKwh: number;
-  annualSavingsRsd: number;
-  investmentRsd: number;
-  paybackMonths: number;
-  co2OffsetKg: number;
-  coveredConsumptionPercent: number;
-}
-
 export interface SmartHomeCalculatorResultDto {
   smartHomeScore: number;
   scoreGrade: string;
@@ -171,7 +158,6 @@ export interface SmartHomeCalculatorResultDto {
   vampirePowerResult?: VampirePowerResultDto;
   smartPlugResult?: SmartPlugResultDto;
   thermostatResult?: ThermostatResultDto;
-  solarResult?: SolarResultDto;
   totalAnnualSavingsRsd: number;
   totalAnnualSavingsKwh: number;
   totalInvestmentRsd: number;

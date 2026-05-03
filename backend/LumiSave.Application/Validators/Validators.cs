@@ -152,7 +152,7 @@ public class SmartHomeCalculatorInputValidator : AbstractValidator<SmartHomeCalc
 
         RuleFor(x => x).Must(x =>
             x.VampirePower != null || x.SmartPlug != null ||
-            x.Thermostat != null || x.LightingAutomation != null || x.Solar != null)
+            x.Thermostat != null || x.LightingAutomation != null)
             .WithMessage("At least one module must be specified.");
 
         When(x => x.VampirePower != null, () =>

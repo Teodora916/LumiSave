@@ -12,14 +12,15 @@ import type { SmartHomeCalculatorResultDto } from '@/api/calculator';
 import { useCartStore } from '@/stores/cartStore';
 import { toast } from 'sonner';
 
-// Default standby wattage by device type
+import { useCalculatorStore } from '@/stores/calculatorStore';
+
 const VAMPIRE_DEVICES: { type: string; label: string; standbyW: number }[] = [
-  { type: 'TV',          label: 'TV',            standbyW: 6  },
-  { type: 'Console',     label: 'Konzola',       standbyW: 8  },
-  { type: 'Chargers',   label: 'Punjači',        standbyW: 4  },
-  { type: 'Microwave',  label: 'Mikrotalasna',   standbyW: 3  },
-  { type: 'PC',         label: 'PC / Laptop',    standbyW: 10 },
-  { type: 'Router',     label: 'Ruter',          standbyW: 8  },
+  { type: 'Television',          label: 'TV',            standbyW: 1.5  },
+  { type: 'DesktopComputer',     label: 'PC / Laptop',   standbyW: 10 },
+  { type: 'Microwave',           label: 'Mikrotalasna',  standbyW: 3.5  },
+  { type: 'WifiRouter',          label: 'Ruter',         standbyW: 7.5  },
+  { type: 'WashingMachine',      label: 'Veš mašina',    standbyW: 2.0  },
+  { type: 'Dishwasher',          label: 'Mašina za sudove', standbyW: 2.5 },
 ];
 
 export const SmartHomeCalculatorPage: React.FC = () => {
@@ -28,35 +29,38 @@ export const SmartHomeCalculatorPage: React.FC = () => {
   const [electricityPrice] = useState(12.5);
 
   // Vampire Power state
-  const [selectedDevices, setSelectedDevices] = useState<Set<string>>(new Set());
+  const [selectedDevices, setSelectedDevices] = useState<Record<string, number>>({});
 
   // Smart Plug state
   const [smartPlugCount, setSmartPlugCount] = useState(0);
 
   // Thermostat state
-  const [monthlyHeatingCost, setMonthlyHeatingCost] = useState(5000);
+  const [monthlyHeatingCost, setMonthlyHeatingCost] = useState(0);
   const [heatingType, setHeatingType] = useState('electric');
 
   const { addItem } = useCartStore();
+  const { ledResult } = useCalculatorStore();
+  
+  const allFieldsFilled = Object.keys(selectedDevices).length > 0 && smartPlugCount > 0 && monthlyHeatingCost > 0;
 
   const calculateMutation = useMutation({
     mutationFn: () =>
       calculatorApi.calculateSmartHome({
         electricityPriceRsd: electricityPrice,
         vampirePower:
-          selectedDevices.size > 0
+          Object.keys(selectedDevices).length > 0
             ? {
-                devices: VAMPIRE_DEVICES.filter((d) => selectedDevices.has(d.type)).map((d) => ({
-                  deviceType: d.type,
-                  quantity: 1,
-                  customStandbyWatts: d.standbyW,
+                devices: Object.entries(selectedDevices).map(([type, qty]) => ({
+                  deviceType: type,
+                  quantity: qty,
+                  customStandbyWatts: VAMPIRE_DEVICES.find(d => d.type === type)?.standbyW,
                 })),
               }
             : undefined,
         smartPlug:
           smartPlugCount > 0
             ? {
-                deviceTypes: Array.from(selectedDevices),
+                deviceTypes: Object.keys(selectedDevices),
                 smartPlugPriceRsd: 1800,
                 smartPlugCount,
               }
@@ -71,6 +75,11 @@ export const SmartHomeCalculatorPage: React.FC = () => {
                 smartThermostatPriceRsd: 15000,
               }
             : undefined,
+        lightingAutomation: ledResult ? {
+            annualLightingCostRsd: Number(ledResult.totalLedAnnualKwh) * electricityPrice,
+            automationTypes: ["MotionSensor"],
+            equipmentCostRsd: 5000,
+        } : undefined,
       }),
     onSuccess: (data) => {
       setResult(data);
@@ -79,17 +88,22 @@ export const SmartHomeCalculatorPage: React.FC = () => {
     },
   });
 
-  const toggleDevice = (type: string) => {
+  const handleQuantityChange = (type: string, delta: number) => {
     setSelectedDevices((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
+      const next = { ...prev };
+      const current = next[type] || 0;
+      const updated = current + delta;
+      if (updated > 0) {
+        next[type] = updated;
+      } else {
+        delete next[type];
+      }
       return next;
     });
   };
 
-  const handleAddProductToCart = (prod: { id: string; name: string; price: number; imageUrl?: string }) => {
-    addItem({ productId: prod.id, name: prod.name, price: prod.price, quantity: 1, imageUrl: prod.imageUrl });
+  const handleAddProductToCart = (prod: { id: string; name: string; price: number; imageUrl?: string }, quantity: number = 1) => {
+    addItem({ productId: prod.id, name: prod.name, price: prod.price, quantity: quantity, imageUrl: prod.imageUrl });
     toast.success(`Dodato u korpu: ${prod.name}`);
   };
 
@@ -140,6 +154,7 @@ export const SmartHomeCalculatorPage: React.FC = () => {
           size="lg"
           onClick={() => calculateMutation.mutate()}
           isLoading={calculateMutation.isPending}
+          disabled={!allFieldsFilled}
           className="shrink-0"
         >
           Analiziraj dom
@@ -155,7 +170,6 @@ export const SmartHomeCalculatorPage: React.FC = () => {
             { id: 'smartplugs',label: 'Smart Plugs',         icon: <Plug className="w-5 h-5"/> },
             { id: 'thermostat',label: 'Grejanje (Termostat)',icon: <Thermometer className="w-5 h-5"/> },
             { id: 'lighting',  label: 'Automatska Rasveta',  icon: <Lightbulb className="w-5 h-5"/> },
-            { id: 'solar',     label: 'Solarni potencijal',  icon: <Sun className="w-5 h-5"/> },
             { id: 'results',   label: 'Zbirni Rezultati',    icon: <LineChart className="w-5 h-5"/> },
           ].map((tab) => (
             <TabsTrigger
@@ -183,26 +197,30 @@ export const SmartHomeCalculatorPage: React.FC = () => {
                 <p className="text-text-muted mb-6">Mnogi uređaji troše struju čak i kada su isključeni, ali su uključeni u utičnicu. Izaberite uređaje koje imate u kući.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {VAMPIRE_DEVICES.map((device) => (
-                    <button
+                    <div
                       key={device.type}
-                      onClick={() => toggleDevice(device.type)}
-                      className={`border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer transition-all ${
-                        selectedDevices.has(device.type)
+                      className={`border rounded-xl p-4 flex flex-col items-center text-center transition-all ${
+                        selectedDevices[device.type] > 0
                           ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-surface-border bg-surface-subtle hover:border-primary/50'
+                          : 'border-surface-border bg-surface-subtle'
                       }`}
                     >
                       <div className="w-12 h-12 bg-surface-card rounded-full flex items-center justify-center mb-2 shadow-sm font-bold text-lg">
                         {device.label[0]}
                       </div>
-                      <span className="font-medium text-sm">{device.label}</span>
-                      <span className="text-xs text-red-400 mt-1">~{device.standbyW}W standby</span>
-                    </button>
+                      <span className="font-medium text-sm mb-1">{device.label}</span>
+                      <span className="text-xs text-red-400 mb-3">~{device.standbyW}W standby</span>
+                      <div className="flex items-center gap-2 mt-auto">
+                        <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(device.type, -1)} disabled={!selectedDevices[device.type]}>-</Button>
+                        <span className="w-4 text-sm font-bold">{selectedDevices[device.type] || 0}</span>
+                        <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(device.type, 1)}>+</Button>
+                      </div>
+                    </div>
                   ))}
                 </div>
-                {selectedDevices.size > 0 && (
+                {Object.keys(selectedDevices).length > 0 && (
                   <div className="mt-4 p-3 bg-surface-subtle border border-surface-border rounded-lg text-sm text-text-muted">
-                    ✅ Izabrano {selectedDevices.size} {selectedDevices.size === 1 ? 'uređaj' : 'uređaja'} — kliknite <strong>Analiziraj dom</strong> gore za rezultate.
+                    ✅ Izabrano {Object.keys(selectedDevices).length} tipova uređaja — kliknite <strong>Analiziraj dom</strong> gore za rezultate.
                   </div>
                 )}
               </CardContent>
@@ -228,7 +246,7 @@ export const SmartHomeCalculatorPage: React.FC = () => {
                       </div>
                       <div className="text-xs text-text-muted mt-1">Investicija: {(smartPlugCount * 1800).toLocaleString('sr-RS')} RSD</div>
                     </div>
-                    <Button variant="primary" size="sm">Dodaj u korpu {smartPlugCount} kom.</Button>
+                    <Button variant="primary" size="sm" onClick={() => handleAddProductToCart({ id: 'plug-01', name: 'Smart Plug', price: 1800, slug: 'smart-plug' }, smartPlugCount)}>Dodaj u korpu {smartPlugCount} kom.</Button>
                   </div>
                 )}
               </CardContent>
@@ -271,18 +289,7 @@ export const SmartHomeCalculatorPage: React.FC = () => {
             </Card>
           </TabsContent>
 
-          {/* SOLAR TAB */}
-          <TabsContent value="solar" className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <h2 className="text-2xl font-display font-semibold mb-6 flex items-center gap-2"><Sun className="text-amber-500"/> Solarni Potencijal</h2>
-            <Card>
-              <CardContent className="p-6 text-center py-12">
-                <Sun className="w-16 h-16 text-amber-500 mx-auto mb-4 opacity-50" />
-                <h3 className="text-xl font-semibold mb-2">Simulacija solarnih panela</h3>
-                <p className="text-text-muted mb-6">Napredni solarni ROI kalkulator dolazi uskoro. Unesite podatke o strehi i godišnjoj potrošnji.</p>
-                <Button variant="secondary">Procenite potencijal krova</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* SOLAR TAB REMOVED */}
 
           {/* RESULTS TAB */}
           <TabsContent value="results" className="animate-in fade-in slide-in-from-right-4 duration-300">
@@ -291,7 +298,7 @@ export const SmartHomeCalculatorPage: React.FC = () => {
               <Card>
                 <CardContent className="p-12 text-center">
                   <p className="text-text-muted mb-4">Popunite sekcije i kliknite <strong>Analiziraj dom</strong> da vidite rezultate.</p>
-                  <Button variant="primary" onClick={() => calculateMutation.mutate()} isLoading={calculateMutation.isPending}>
+                  <Button variant="primary" onClick={() => calculateMutation.mutate()} isLoading={calculateMutation.isPending} disabled={!allFieldsFilled}>
                     Analiziraj dom
                   </Button>
                 </CardContent>

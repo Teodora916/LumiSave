@@ -47,7 +47,14 @@ export const LoginPage: React.FC = () => {
 
       login(user, response.accessToken, response.refreshToken);
       toast.success(`Dobrodošli, ${response.firstName}!`);
-      navigate(nextPath, { replace: true });
+      
+      let targetPath = nextPath;
+      if (user.role === 'ADMIN' && targetPath === '/') {
+        targetPath = '/admin';
+      } else if (user.role === 'CUSTOMER' && targetPath.startsWith('/admin')) {
+        targetPath = '/';
+      }
+      navigate(targetPath, { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Prijavljivanje nije uspelo.';
       toast.error(message);
