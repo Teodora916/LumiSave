@@ -243,10 +243,9 @@ export const LEDCalculatorPage: React.FC = () => {
               {lightingGroups.map((group) => (
                 <motion.div
                   key={group.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
+                  initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                  animate={{ opacity: 1, height: 'auto', transitionEnd: { overflow: 'visible' } }}
+                  exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
                 >
                   <Card className="border border-surface-border bg-surface-card">
                     <CardContent className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 relative">

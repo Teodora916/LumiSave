@@ -105,7 +105,7 @@ public static class DataSeeder
                 WattageOld = 60, WattageLed = 10, LuminousFlux = 806,
                 ColorTemperature = 2700, CRI = 80, SocketType = "E27",
                 BulbType = "Incandescent", IsDimmable = false,
-                ImageUrls = """["https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/lightbulb?lock=1"]""",
                 Specifications = """{"Voltage": "220-240V", "Lifetime": "15000h", "EnergyClass": "A+"}"""
             },
             new()
@@ -121,7 +121,7 @@ public static class DataSeeder
                 WattageOld = 100, WattageLed = 14, LuminousFlux = 1521,
                 ColorTemperature = 6500, CRI = 80, SocketType = "E27",
                 BulbType = "Incandescent", IsDimmable = false,
-                ImageUrls = """["https://images.unsplash.com/photo-1565814636199-ae8133055c1c?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/lightbulb?lock=2"]""",
                 Specifications = """{"Voltage": "220-240V", "Lifetime": "15000h", "EnergyClass": "A++"}"""
             },
             new()
@@ -137,7 +137,7 @@ public static class DataSeeder
                 WattageOld = 50, WattageLed = 7, LuminousFlux = 400,
                 ColorTemperature = 3000, CRI = 80, SocketType = "GU10",
                 BulbType = "Halogen", IsDimmable = true,
-                ImageUrls = """["https://images.unsplash.com/photo-1616421275384-a4871cf65b5f?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/spotlight?lock=1"]""",
                 Specifications = """{"Voltage": "220-240V", "BeamAngle": "36°", "Lifetime": "20000h"}"""
             },
             new()
@@ -153,7 +153,7 @@ public static class DataSeeder
                 WattageOld = 36, WattageLed = 18, LuminousFlux = 2000,
                 ColorTemperature = 4000, CRI = 80, SocketType = "G13",
                 BulbType = "T8Fluorescent", IsDimmable = false,
-                ImageUrls = """["https://images.unsplash.com/photo-1552528731-01f786d7e008?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/fluorescent?lock=1"]""",
                 Specifications = """{"Length": "120cm", "Voltage": "220-240V", "Lifetime": "50000h"}"""
             },
 
@@ -170,7 +170,7 @@ public static class DataSeeder
                 Brand = "TP-Link", IsFeatured = true, IsSmartDevice = true,
                 WattageLed = 8, LuminousFlux = 806, SocketType = "E27", IsDimmable = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "SmartBulb", StandbyWattage = 0.5m,
-                ImageUrls = """["https://images.unsplash.com/photo-1621360841013-c7683c659ec6?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/lightbulb?lock=3"]""",
                 Specifications = """{"Protocol": "WiFi 2.4GHz", "App": "Tapo", "ColorRange": "2500K-6500K"}"""
             },
             new()
@@ -185,7 +185,7 @@ public static class DataSeeder
                 Brand = "IKEA", IsSmartDevice = true,
                 WattageLed = 9, LuminousFlux = 1000, SocketType = "E27", IsDimmable = true,
                 SmartProtocol = "Zigbee", SmartHomeCategory = "SmartBulb", StandbyWattage = 0.3m,
-                ImageUrls = """["https://images.unsplash.com/photo-1563453392212-326f5e854473?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/lightbulb?lock=4"]""",
                 Specifications = """{"Protocol": "Zigbee 3.0", "ColorTemperature": "2200K-4000K"}"""
             },
 
@@ -201,7 +201,7 @@ public static class DataSeeder
                 StockQuantity = 150, CategoryId = categories["Smart Plugs"].Id,
                 Brand = "TP-Link", IsFeatured = true, IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "SmartPlug", StandbyWattage = 0.5m,
-                ImageUrls = """["https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/plug?lock=1"]""",
                 Specifications = """{"MaxLoad": "3680W", "Protocol": "WiFi 2.4GHz", "Monitoring": "Real-time"}"""
             },
             new()
@@ -215,7 +215,7 @@ public static class DataSeeder
                 StockQuantity = 90, CategoryId = categories["Smart Plugs"].Id,
                 Brand = "Shelly", IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "SmartPlug", StandbyWattage = 0.4m,
-                ImageUrls = """["https://images.unsplash.com/photo-1596541223130-5d31a73fb6c6?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/plug?lock=2"]""",
                 Specifications = """{"MaxLoad": "2500W", "Protocol": "WiFi 2.4GHz", "API": "REST/MQTT"}"""
             },
             new()
@@ -229,7 +229,7 @@ public static class DataSeeder
                 StockQuantity = 200, CategoryId = categories["Smart Plugs"].Id,
                 Brand = "SONOFF", IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "SmartPlug", StandbyWattage = 0.3m,
-                ImageUrls = """["https://images.unsplash.com/photo-1600585154340-be6199f7e209?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/plug?lock=3"]""",
                 Specifications = """{"MaxLoad": "2300W", "Protocol": "WiFi 2.4GHz"}"""
             },
 
@@ -245,7 +245,7 @@ public static class DataSeeder
                 StockQuantity = 75, CategoryId = categories["Sensors & Detection"].Id,
                 Brand = "Aqara", IsSmartDevice = true,
                 SmartProtocol = "Zigbee", SmartHomeCategory = "Sensor",
-                ImageUrls = """["https://images.unsplash.com/photo-1558002038-1055907df827?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/sensor?lock=1"]""",
                 Specifications = """{"Range": "5m", "Angle": "170°", "Battery": "CR2450", "Zigbee": "3.0"}"""
             },
             new()
@@ -259,7 +259,7 @@ public static class DataSeeder
                 StockQuantity = 60, CategoryId = categories["Sensors & Detection"].Id,
                 Brand = "Shelly", IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "Sensor",
-                ImageUrls = """["https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/sensor?lock=2"]""",
                 Specifications = """{"Battery": "CR2032", "Range": "50m", "Protocol": "WiFi 2.4GHz"}"""
             },
 
@@ -275,7 +275,7 @@ public static class DataSeeder
                 StockQuantity = 25, CategoryId = categories["Smart Thermostats"].Id,
                 Brand = "Tado", IsFeatured = true, IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "Thermostat",
-                ImageUrls = """["https://images.unsplash.com/photo-1567924675637-283a6742993e?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/thermostat?lock=1"]""",
                 Specifications = """{"Heating": "Gas/Electric/HeatPump", "Zones": "1+", "Geofencing": "Yes"}"""
             },
             new()
@@ -289,7 +289,7 @@ public static class DataSeeder
                 StockQuantity = 40, CategoryId = categories["Smart Thermostats"].Id,
                 Brand = "Salus", IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "Thermostat",
-                ImageUrls = """["https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/thermostat?lock=2"]""",
                 Specifications = """{"MaxLoad": "3600W", "Protocol": "WiFi 2.4GHz", "TempRange": "5-40°C"}"""
             },
 
@@ -305,7 +305,7 @@ public static class DataSeeder
                 StockQuantity = 55, CategoryId = categories["Smart Hubs & Controllers"].Id,
                 Brand = "SONOFF", IsSmartDevice = true,
                 SmartProtocol = "Zigbee", SmartHomeCategory = "Hub",
-                ImageUrls = """["https://images.unsplash.com/photo-1614624532983-4ce03382d63d?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/router?lock=1"]""",
                 Specifications = """{"Standard": "Zigbee 3.0", "Range": "100m", "Devices": "200+"}"""
             },
 
@@ -321,7 +321,7 @@ public static class DataSeeder
                 StockQuantity = 20, CategoryId = categories["Energy Monitors"].Id,
                 Brand = "Shelly", IsFeatured = true, IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "EnergyMonitor",
-                ImageUrls = """["https://images.unsplash.com/photo-1590133322355-62970624022a?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/electricity?lock=1"]""",
                 Specifications = """{"Phases": "3", "MaxCurrent": "120A/phase", "API": "REST/MQTT"}"""
             },
             new()
@@ -335,7 +335,7 @@ public static class DataSeeder
                 StockQuantity = 30, CategoryId = categories["Energy Monitors"].Id,
                 Brand = "Emporia", IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "EnergyMonitor",
-                ImageUrls = """["https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/electricity?lock=2"]""",
                 Specifications = """{"Circuits": "16", "Protocol": "WiFi 2.4GHz", "CloudSync": "Yes"}"""
             },
 
@@ -350,7 +350,7 @@ public static class DataSeeder
                 Price = 89900m, CompareAtPrice = 110000m,
                 StockQuantity = 10, CategoryId = categories["Solar Kits"].Id,
                 Brand = "Hoymiles", IsFeatured = true,
-                ImageUrls = """["https://images.unsplash.com/photo-1509391366360-2e959784a276?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/solarpanel?lock=1"]""",
                 Specifications = """{"Power": "600W", "Panels": "2x300W", "Inverter": "600W", "Warranty": "10 years"}"""
             },
 
@@ -366,7 +366,7 @@ public static class DataSeeder
                 StockQuantity = 100, CategoryId = categories["Smart Switches & Dimmers"].Id,
                 Brand = "Shelly", IsSmartDevice = true,
                 SmartProtocol = "WiFi", SmartHomeCategory = "SmartSwitch",
-                ImageUrls = """["https://images.unsplash.com/photo-1614624532983-4ce03382d63d?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/switch?lock=1"]""",
                 Specifications = """{"MaxLoad": "2300W", "Protocol": "WiFi 2.4GHz", "API": "REST/MQTT"}"""
             },
 
@@ -382,7 +382,7 @@ public static class DataSeeder
                 StockQuantity = 30, CategoryId = categories["Bundles"].Id,
                 IsFeatured = true, IsSmartDevice = true,
                 SmartProtocol = "WiFi",
-                ImageUrls = """["https://images.unsplash.com/photo-1558002038-1055907df827?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/smarthome?lock=1"]""",
                 Specifications = """{"Includes": "4x TP-Link P110, 2x Tapo L530E, 1x Aqara Motion Sensor"}"""
             },
             new()
@@ -395,7 +395,7 @@ public static class DataSeeder
                 Price = 19490m, CompareAtPrice = 25990m,
                 StockQuantity = 15, CategoryId = categories["Bundles"].Id,
                 WattageLed = 18, WattageOld = 36, BulbType = "T8Fluorescent",
-                ImageUrls = """["https://images.unsplash.com/photo-1497366216548-37526070297c?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/office?lock=1"]""",
                 Specifications = """{"Includes": "10x Philips T8 18W, 6x Philips E27 10W", "TotalSavings": "~70%"}"""
             },
             new()
@@ -408,7 +408,7 @@ public static class DataSeeder
                 Price = 7490m, CompareAtPrice = 8950m,
                 StockQuantity = 40, CategoryId = categories["Bundles"].Id,
                 IsSmartDevice = true, SmartProtocol = "WiFi", SmartHomeCategory = "SmartPlug",
-                ImageUrls = """["https://images.unsplash.com/photo-1584622781564-1d9876a13d00?w=500"]""",
+                ImageUrls = """["https://loremflickr.com/800/800/plug?lock=4"]""",
                 Specifications = """{"Includes": "5x TP-Link Tapo P110", "AnnualSavings": "~3000 RSD"}"""
             }
         };
